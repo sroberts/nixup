@@ -59,30 +59,22 @@ nixup/
    ```bash
    sudo ./install.sh
    ```
-4. Follow the prompts for disk selection, swap size, and encryption
+4. Follow the prompts:
+   - Disk selection and swap size
+   - LUKS encryption password (optional)
+   - Username, full name, and password
+   - System hostname
 5. Reboot into your new system
 
 ### Post-Installation
 
-1. Set password for your user:
+1. Set your Git identity:
    ```bash
-   passwd user
+   git config --global user.name "Your Name"
+   git config --global user.email "you@example.com"
    ```
 
-2. Edit the configuration to customize:
-   ```bash
-   sudo nvim /etc/nixos/hosts/framework/default.nix
-   ```
-   - Change `users.users.user` to your username
-   - Update `networking.hostName`
-
-3. Edit Home Manager git config:
-   ```bash
-   sudo nvim /etc/nixos/modules/home/git.nix
-   ```
-   - Set `userName` and `userEmail`
-
-4. Apply changes:
+2. To make system changes, edit `/etc/nixos/` and apply:
    ```bash
    sudo nixos-rebuild switch --flake /etc/nixos#framework
    ```

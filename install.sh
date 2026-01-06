@@ -33,6 +33,10 @@ DRY_RUN=false
 USE_ENCRYPTION=true
 DISK=""
 SWAP_SIZE=""
+USERNAME=""
+USER_FULLNAME=""
+USER_PASSWORD=""
+HOSTNAME=""
 
 # Logging functions
 log_info() { echo -e "${CYAN}[INFO]${RESET} $1"; }
@@ -174,6 +178,81 @@ get_encryption_password() {
             log_error "Passwords don't match, try again"
         fi
     done
+}
+
+# Get user details
+get_user_details() {
+    echo ""
+    log_info "User Configuration"
+
+    # Username
+    while true; do
+        read -rp "Username: " USERNAME
+        if [[ "$USERNAME" =~ ^[a-z][a-z0-9_-]*$ ]]; then
+            break
+        else
+            log_error "Invalid username. Use lowercase letters, numbers, underscores, hyphens."
+        fi
+    done
+
+    # Full name
+    read -rp "Full name [$USERNAME]: " USER_FULLNAME
+    USER_FULLNAME="${USER_FULLNAME:-$USERNAME}"
+
+    # Password
+    while true; do
+        read -rsp "User password: " pass1
+        echo ""
+        read -rsp "Confirm password: " pass2
+        echo ""
+
+        if [[ "$pass1" == "$pass2" ]]; then
+            USER_PASSWORD="$pass1"
+            break
+        else
+            log_error "Passwords don't match, try again"
+        fi
+    done
+
+    # Hostname
+    read -rp "System hostname [framework]: " HOSTNAME
+    HOSTNAME="${HOSTNAME:-framework}"
+
+    echo ""
+    log_success "User: $USERNAME ($USER_FULLNAME)"
+    log_success "Hostname: $HOSTNAME"
+}
+
+# Update configuration with user details
+configure_user() {
+    log_info "Configuring user account..."
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would configure user: $USERNAME"
+        return
+    fi
+
+    local host_config="${SCRIPT_DIR}/hosts/framework/default.nix"
+    local home_config="${SCRIPT_DIR}/modules/home/default.nix"
+
+    # Generate password hash
+    local password_hash
+    password_hash=$(echo -n "$USER_PASSWORD" | mkpasswd -m sha-512 -s)
+
+    # Update host configuration
+    sed -i "s/networking.hostName = \"framework\"/networking.hostName = \"$HOSTNAME\"/" "$host_config"
+    sed -i "s/users.users.user/users.users.$USERNAME/" "$host_config"
+    sed -i "s/description = \"User\"/description = \"$USER_FULLNAME\"/" "$host_config"
+    sed -i "s/home-manager.users.user/home-manager.users.$USERNAME/" "$host_config"
+
+    # Add hashed password
+    sed -i "/shell = pkgs.zsh;/a\\    hashedPassword = \"$password_hash\";" "$host_config"
+
+    # Remove the comment about setting password
+    sed -i '/Set password with: passwd/d' "$host_config"
+    sed -i '/Or use hashedPassword/d' "$host_config"
+
+    log_success "User account configured"
 }
 
 # Partition disk
@@ -373,10 +452,9 @@ show_completion() {
     echo ""
     echo -e "  ${CYAN}Next steps:${RESET}"
     echo -e "    1. Reboot into your new system"
-    echo -e "    2. Log in (default user: 'user', set password with passwd)"
-    echo -e "    3. Edit /etc/nixos/hosts/framework/default.nix"
-    echo -e "       - Set your username and other preferences"
-    echo -e "    4. Apply changes: ${WHITE}sudo nixos-rebuild switch --flake /etc/nixos#framework${RESET}"
+    echo -e "    2. Log in as ${WHITE}${USERNAME}${RESET}"
+    echo -e "    3. To make changes, edit /etc/nixos/ and run:"
+    echo -e "       ${WHITE}sudo nixos-rebuild switch --flake /etc/nixos#framework${RESET}"
     echo ""
     echo -e "  ${CYAN}Key bindings:${RESET}"
     echo -e "    ${WHITE}Super + Return${RESET}  - Open terminal"
@@ -409,7 +487,11 @@ main() {
     fi
 
     echo ""
-    echo -e "${CYAN}Step 2: Partitioning${RESET}"
+    echo -e "${CYAN}Step 2: User Setup${RESET}"
+    get_user_details
+
+    echo ""
+    echo -e "${CYAN}Step 3: Partitioning${RESET}"
     partition_disk
     get_partitions
     setup_encryption
@@ -417,11 +499,12 @@ main() {
     mount_partitions
 
     echo ""
-    echo -e "${CYAN}Step 3: Configuration${RESET}"
+    echo -e "${CYAN}Step 4: Configuration${RESET}"
+    configure_user
     generate_hardware_config
 
     echo ""
-    echo -e "${CYAN}Step 4: Installation${RESET}"
+    echo -e "${CYAN}Step 5: Installation${RESET}"
     run_install
 
     show_completion
