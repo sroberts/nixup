@@ -48,7 +48,7 @@ nixup/
 1. Boot from the NixOS installation ISO
 2. Clone this repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/nixup.git
+   git clone https://github.com/sroberts/nixup.git
    cd nixup
    ```
 3. Run the installer:

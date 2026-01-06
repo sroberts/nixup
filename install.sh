@@ -73,7 +73,7 @@ This script will:
 
 For Framework 13 laptops, additional hardware optimizations are included.
 
-Report issues: https://github.com/YOUR_USERNAME/nixup/issues
+Report issues: https://github.com/sroberts/nixup/issues
 EOF
 }
 
