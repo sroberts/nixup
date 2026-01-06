@@ -34,7 +34,6 @@ generate_configuration_nix() {
     local username="${USERNAME:-user}"
     local user_fullname="${USER_FULLNAME:-$username}"
     local user_password="${USER_PASSWORD:-}"
-    local timezone="${TIMEZONE:-UTC}"
     local locale="${LOCALE:-en_US.UTF-8}"
     local keyboard="${KEYBOARD_LAYOUT:-us}"
 
@@ -63,8 +62,7 @@ generate_configuration_nix() {
   # System hostname
   networking.hostName = "${hostname}";
 
-  # Localization
-  time.timeZone = "${timezone}";
+  # Localization (timezone handled by automatic-timezoned in base.nix)
   i18n.defaultLocale = "${locale}";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "${locale}";

@@ -153,7 +153,7 @@ show_summary() {
     echo ""
     echo -e "  ${CYAN}Username:${RESET}     ${USERNAME:-N/A}"
     echo -e "  ${CYAN}Hostname:${RESET}     ${HOSTNAME:-N/A}"
-    echo -e "  ${CYAN}Timezone:${RESET}     ${TIMEZONE:-N/A}"
+    echo -e "  ${CYAN}Timezone:${RESET}     automatic"
     echo -e "  ${CYAN}Locale:${RESET}       ${LOCALE:-N/A}"
     echo -e "  ${CYAN}Keyboard:${RESET}     ${KEYBOARD_LAYOUT:-N/A}"
     echo ""

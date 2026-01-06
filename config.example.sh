@@ -18,9 +18,9 @@ export USER_PASSWORD="changeme"      # User password (CHANGE THIS!)
 
 # System configuration
 export HOSTNAME="nixos"              # System hostname
-export TIMEZONE="America/New_York"   # Your timezone
 export LOCALE="en_US.UTF-8"          # System locale
 export KEYBOARD_LAYOUT="us"          # Console keyboard layout
+# Note: Timezone is automatically detected via automatic-timezoned service
 
 # Hardware overrides (usually auto-detected)
 # export CPU_VENDOR="intel"          # intel or amd

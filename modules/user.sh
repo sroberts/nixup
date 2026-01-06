@@ -18,7 +18,6 @@ export USERNAME=""
 export USER_FULLNAME=""
 export USER_PASSWORD=""
 export HOSTNAME=""
-export TIMEZONE=""
 export LOCALE=""
 export KEYBOARD_LAYOUT=""
 
@@ -57,38 +56,6 @@ configure_hostname() {
     done
 
     log_success "Hostname set to: $HOSTNAME"
-}
-
-# Configure timezone
-configure_timezone() {
-    log_info "Configuring timezone..."
-
-    # Common timezone options
-    local timezones=(
-        "America/New_York"
-        "America/Chicago"
-        "America/Denver"
-        "America/Los_Angeles"
-        "America/Toronto"
-        "Europe/London"
-        "Europe/Berlin"
-        "Europe/Paris"
-        "Asia/Tokyo"
-        "Asia/Shanghai"
-        "Australia/Sydney"
-        "Other (enter manually)"
-    )
-
-    local selection
-    selection=$(select_option "Select timezone" "${timezones[@]}")
-
-    if [[ "$selection" == "Other (enter manually)" ]]; then
-        ask "Enter timezone (e.g., America/New_York)" "UTC" TIMEZONE
-    else
-        TIMEZONE="$selection"
-    fi
-
-    log_success "Timezone set to: $TIMEZONE"
 }
 
 # Configure locale
@@ -171,10 +138,10 @@ EOF
 }
 
 # Generate locale configuration
+# Note: timezone is handled by automatic-timezoned service in base.nix
 generate_locale_config() {
     cat << EOF
   # Localization
-  time.timeZone = "${TIMEZONE}";
   i18n.defaultLocale = "${LOCALE}";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "${LOCALE}";
@@ -197,10 +164,9 @@ EOF
 setup_user() {
     configure_user
     configure_hostname
-    configure_timezone
     configure_locale
     configure_keyboard
 }
 
-export -f configure_user configure_hostname configure_timezone configure_locale configure_keyboard
+export -f configure_user configure_hostname configure_locale configure_keyboard
 export -f get_password_hash generate_user_config generate_locale_config setup_user
