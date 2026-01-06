@@ -346,6 +346,18 @@ setup_encryption() {
     # Store original partition for hardware config
     LUKS_DEVICE="$ROOT_PART"
 
+    # Close any existing LUKS mapping that might be using this device
+    if cryptsetup status cryptroot &>/dev/null; then
+        log_info "Closing existing LUKS mapping..."
+        cryptsetup close cryptroot || true
+    fi
+
+    # Wipe any existing LUKS signature
+    if blkid "$ROOT_PART" | grep -q crypto_LUKS; then
+        log_info "Wiping existing LUKS signature..."
+        wipefs -a "$ROOT_PART"
+    fi
+
     # Encrypt root
     echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type luks2 \
         --cipher aes-xts-plain64 \
