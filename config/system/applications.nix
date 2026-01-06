@@ -93,6 +93,9 @@
     go
     gopls            # Go language server
 
+    # Documentation / Diagrams
+    mermaid-cli      # Generate diagrams from text (mmdc)
+
     # ─────────────────────────────────────────────────────────────
     # Modern CLI / TUI Tools
     # ─────────────────────────────────────────────────────────────
