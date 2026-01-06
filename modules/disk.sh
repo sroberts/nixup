@@ -18,6 +18,7 @@ source "${LIB_DIR}/utils.sh"
 export DISK=""
 export USE_ENCRYPTION=false
 export LUKS_PASSWORD=""
+export LUKS_DEVICE=""
 export SWAP_SIZE=""
 export EFI_PART=""
 export ROOT_PART=""
@@ -126,6 +127,9 @@ setup_encryption() {
     fi
 
     log_info "Setting up LUKS encryption..."
+
+    # Store the original partition path for boot configuration
+    LUKS_DEVICE="$ROOT_PART"
 
     # Encrypt root partition
     echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type luks2 \

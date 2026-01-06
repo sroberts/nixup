@@ -264,18 +264,13 @@ EOF
     fi
 
     # LUKS encryption configuration
-    if [[ "${USE_ENCRYPTION:-false}" == "true" ]]; then
-        # Get the encrypted device UUID
-        local crypt_device="${ROOT_PART%/mapper/cryptroot}"
-        if [[ "$crypt_device" != "$ROOT_PART" ]]; then
-            # Find the actual encrypted partition
-            local orig_part
-            orig_part=$(lsblk -lno NAME,TYPE | grep part | tail -1 | awk '{print "/dev/"$1}')
-            local crypt_uuid
-            crypt_uuid=$(blkid -s UUID -o value "$orig_part" 2>/dev/null || echo "")
+    if [[ "${USE_ENCRYPTION:-false}" == "true" && -n "${LUKS_DEVICE:-}" ]]; then
+        # Get the UUID of the encrypted partition
+        local crypt_uuid
+        crypt_uuid=$(blkid -s UUID -o value "$LUKS_DEVICE" 2>/dev/null || echo "")
 
-            if [[ -n "$crypt_uuid" ]]; then
-                cat >> "$output_file" << EOF
+        if [[ -n "$crypt_uuid" ]]; then
+            cat >> "$output_file" << EOF
   # LUKS encryption
   boot.initrd.luks.devices = {
     cryptroot = {
@@ -286,7 +281,8 @@ EOF
   };
 
 EOF
-            fi
+        else
+            log_warn "Could not determine UUID for LUKS device: $LUKS_DEVICE"
         fi
     fi
 
