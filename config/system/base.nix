@@ -112,13 +112,11 @@
     };
   };
 
-  # System packages
+  # System packages (core utilities only - apps in applications.nix)
   environment.systemPackages = with pkgs; [
     # Essential tools
-    vim
     wget
     curl
-    git
     htop
     btop
     tree
@@ -130,9 +128,10 @@
     usbutils
     lshw
 
-    # Development
+    # Build essentials
     gcc
     gnumake
+    pkg-config
 
     # Networking
     networkmanagerapplet

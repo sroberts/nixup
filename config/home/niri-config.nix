@@ -106,8 +106,8 @@
         // Mod key is Super (Windows key)
 
         // Launch terminal
-        Mod+Return { spawn "alacritty"; }
-        Mod+Shift+Return { spawn "foot"; }
+        Mod+Return { spawn "ghostty"; }
+        Mod+Shift+Return { spawn "alacritty"; }
 
         // Application launcher
         Mod+Space { spawn "fuzzel"; }

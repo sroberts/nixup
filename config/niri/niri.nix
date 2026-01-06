@@ -44,12 +44,8 @@
     XDG_CURRENT_DESKTOP = "niri";
   };
 
-  # Programs commonly used with Niri
+  # Programs commonly used with Niri (terminals in applications.nix)
   environment.systemPackages = with pkgs; [
-    # Terminal
-    alacritty
-    foot
-
     # Application launcher
     fuzzel
 

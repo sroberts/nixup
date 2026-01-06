@@ -99,7 +99,7 @@ The installer will guide you through:
 
 | Key | Action |
 |-----|--------|
-| `Super + Return` | Open terminal (Alacritty) |
+| `Super + Return` | Open terminal (Ghostty) |
 | `Super + Space` | Open application launcher (Fuzzel) |
 | `Super + E` | Open file manager |
 | `Super + Q` | Close window |
@@ -123,18 +123,47 @@ The installer will guide you through:
 - **Mako** - Notification daemon
 - **Swaylock** - Screen locker
 
-### Applications
-- **Alacritty/Foot** - Terminal emulators
-- **PCManFM/Nautilus** - File managers
-- **mpv** - Media player
-- **imv** - Image viewer
-- **PulseAudio Volume Control** - Audio settings
+### Terminals & Editors
+- **Ghostty** - GPU-accelerated terminal (default)
+- **Alacritty/Foot** - Alternate terminals
+- **Neovim** - Default editor (with LazyVim-ready config)
+- **Zed** - Modern collaborative editor
 
-### System Tools
-- NetworkManager with applet
-- Blueman (Bluetooth manager)
-- Brightnessctl (backlight control)
-- Screenshot tools (grim, slurp, swappy)
+### Browsers & Communication
+- **Chromium** - Web browser
+- **Signal** - Encrypted messaging
+- **Discord** - Chat and voice
+- **Zoom** - Video conferencing
+
+### Productivity
+- **LibreOffice** - Full office suite
+- **Obsidian** - Knowledge base / notes
+- **Typora** - Markdown editor
+- **1Password** - Password manager
+
+### Media
+- **Spotify** - Music streaming
+- **OBS Studio** - Screen recording / streaming
+- **mpv** - Media player
+
+### Development
+- **Docker** with Compose and Lazydocker TUI
+- **Git** with GitHub CLI and Lazygit
+- **Mise** - Multi-runtime version manager
+- **Python, Node.js, Go** with UV package manager
+
+### Modern CLI Tools
+- **fzf** - Fuzzy finder
+- **ripgrep** - Fast search (rg)
+- **zoxide** - Smart cd replacement
+- **eza** - Modern ls replacement
+- **bat** - Cat with syntax highlighting
+- **btop/htop** - System monitors
+- **delta** - Better git diff
+
+### Other
+- **LocalSend** - Cross-platform file sharing
+- **Calculator** - GNOME calculator
 
 ## Customization
 

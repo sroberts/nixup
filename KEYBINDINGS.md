@@ -7,8 +7,8 @@ All keybindings use **Super** (Windows key) as the modifier.
 | Key | Action |
 |-----|--------|
 | `Super + Space` | Application launcher (Fuzzel) |
-| `Super + Return` | Terminal (Alacritty) |
-| `Super + Shift + Return` | Alternate terminal (Foot) |
+| `Super + Return` | Terminal (Ghostty) |
+| `Super + Shift + Return` | Alternate terminal (Alacritty) |
 | `Super + E` | File manager (PCManFM) |
 | `Super + L` | Lock screen |
 | `Super + Shift + E` | Power menu (logout/suspend/reboot/shutdown) |

@@ -54,6 +54,7 @@ generate_configuration_nix() {
   imports = [
     ./hardware-configuration.nix
     ./modules/base.nix
+    ./modules/applications.nix
     ./modules/niri.nix
     ./modules/hardware-custom.nix
   ];
@@ -83,7 +84,7 @@ generate_configuration_nix() {
   users.users.${username} = {
     isNormalUser = true;
     description = "${user_fullname}";
-    extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" "docker" ];
     hashedPassword = "${password_hash}";
     shell = pkgs.zsh;
   };
@@ -106,6 +107,9 @@ copy_module_configs() {
 
     # Copy base system config
     cp "${CONFIG_DIR}/system/base.nix" "${target_dir}/base.nix"
+
+    # Copy applications config
+    cp "${CONFIG_DIR}/system/applications.nix" "${target_dir}/applications.nix"
 
     # Copy Niri config
     cp "${CONFIG_DIR}/niri/niri.nix" "${target_dir}/niri.nix"
@@ -381,7 +385,7 @@ hotkey-overlay {
 }
 
 binds {
-    Mod+Return { spawn "alacritty"; }
+    Mod+Return { spawn "ghostty"; }
     Mod+Space { spawn "fuzzel"; }
     Mod+E { spawn "pcmanfm"; }
     Mod+Q { close-window; }
