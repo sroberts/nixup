@@ -77,6 +77,7 @@
     # ─────────────────────────────────────────────────────────────
     # Git (TUI preferred)
     git
+    git-credential-libsecret  # Secure credential storage via system keyring
     gh               # GitHub CLI
     lazygit          # Git TUI (default)
     tig              # Git TUI viewer

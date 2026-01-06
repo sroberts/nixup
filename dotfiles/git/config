@@ -97,7 +97,9 @@
     ui = auto
 
 [credential]
-    helper = store
+    # Use libsecret for secure credential storage via system keyring
+    # Requires git-credential-libsecret package (included in applications.nix)
+    helper = libsecret
 
 [url "git@github.com:"]
     insteadOf = gh:
