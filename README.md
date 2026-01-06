@@ -1,53 +1,57 @@
 # nixup
 
-A modular, maintainable NixOS installation script optimized for Framework 13 laptops with the Niri Wayland compositor.
+A declarative NixOS flake configuration for Framework 13 laptops with the Niri Wayland compositor.
 
 ## Features
 
-- **Modular Design**: Separated into libraries and modules for easy maintenance and customization
-- **Framework 13 Support**: Hardware-specific optimizations including TLP, firmware updates, and sensor support
-- **Niri Wayland Compositor**: Modern, scrollable tiling Wayland compositor pre-configured with sensible defaults
-- **LUKS Encryption**: Optional full-disk encryption with LUKS2
-- **Hardware Detection**: Automatic detection of CPU, GPU, laptop features, fingerprint readers, and Bluetooth
-- **Interactive & Non-Interactive**: Run interactively or provide a config file for automated installations
+- **Flake-based**: Reproducible builds with pinned dependencies
+- **Home Manager**: Declarative user configuration
+- **Framework 13 Support**: TLP power management, firmware updates, ambient light sensor
+- **Niri Wayland Compositor**: Modern, scrollable tiling compositor with sensible defaults
+- **LUKS Encryption**: Optional full-disk encryption
+- **Tokyo Night Theme**: Consistent theming across terminal, editor, and desktop
 
 ## Project Structure
 
 ```
 nixup/
-├── install.sh              # Main installation script
-├── config.example.sh       # Example configuration for non-interactive install
-├── lib/                    # Shell libraries
-│   ├── colors.sh           # Terminal color definitions
-│   ├── logging.sh          # Logging utilities
-│   ├── prompts.sh          # User input prompts
-│   └── utils.sh            # General utilities
-├── modules/                # Installation modules
-│   ├── disk.sh             # Disk partitioning and encryption
-│   ├── user.sh             # User configuration
-│   ├── hardware.sh         # Hardware detection
-│   └── nixos-config.sh     # NixOS configuration generator
-└── config/                 # NixOS configuration templates
-    ├── system/
-    │   └── base.nix        # Base system configuration
-    ├── niri/
-    │   └── niri.nix        # Niri compositor configuration
-    └── home/
-        └── niri-config.nix # User-level Niri configuration
+├── flake.nix                   # Flake entry point
+├── flake.lock                  # Pinned dependencies
+├── install.sh                  # Disk partitioning and installation
+├── hosts/
+│   └── framework/              # Framework 13 host configuration
+│       ├── default.nix         # Main host config
+│       └── hardware-configuration.nix
+└── modules/
+    ├── nixos/                  # System-level NixOS modules
+    │   ├── base.nix            # Core system settings
+    │   ├── niri.nix            # Niri compositor
+    │   ├── applications.nix    # System packages
+    │   └── framework.nix       # Framework hardware
+    └── home/                   # Home Manager modules
+        ├── default.nix         # Home Manager entry point
+        ├── shell.nix           # Zsh, starship, CLI tools
+        ├── git.nix             # Git configuration
+        ├── niri.nix            # Niri user config, waybar, mako
+        ├── ghostty.nix         # Terminal configuration
+        └── yazi.nix            # File manager
 ```
 
 ## Requirements
 
-- NixOS installation ISO (24.11 or later recommended)
+- NixOS installation ISO (24.11 or later)
 - UEFI boot mode
 - Internet connection
 - At least 20GB disk space
 
-## Quick Start
+## Installation
+
+### Fresh Install
 
 1. Boot from the NixOS installation ISO
 2. Clone this repository:
    ```bash
+   nix-shell -p git
    git clone https://github.com/sroberts/nixup.git
    cd nixup
    ```
@@ -55,232 +59,172 @@ nixup/
    ```bash
    sudo ./install.sh
    ```
-4. Follow the interactive prompts
+4. Follow the prompts for disk selection, swap size, and encryption
 5. Reboot into your new system
+
+### Post-Installation
+
+1. Set password for your user:
+   ```bash
+   passwd user
+   ```
+
+2. Edit the configuration to customize:
+   ```bash
+   sudo nvim /etc/nixos/hosts/framework/default.nix
+   ```
+   - Change `users.users.user` to your username
+   - Update `networking.hostName`
+
+3. Edit Home Manager git config:
+   ```bash
+   sudo nvim /etc/nixos/modules/home/git.nix
+   ```
+   - Set `userName` and `userEmail`
+
+4. Apply changes:
+   ```bash
+   sudo nixos-rebuild switch --flake /etc/nixos#framework
+   ```
 
 ## Usage
 
-### Interactive Installation
+### Rebuilding the System
 
 ```bash
-sudo ./install.sh
+# Apply changes
+sudo nixos-rebuild switch --flake /etc/nixos#framework
+
+# Test changes (reverts on reboot)
+sudo nixos-rebuild test --flake /etc/nixos#framework
+
+# Build without switching
+sudo nixos-rebuild build --flake /etc/nixos#framework
 ```
 
-The installer will guide you through:
-1. Disk selection and partitioning
-2. Optional LUKS encryption setup
-3. User account creation
-4. System configuration (hostname, timezone, locale)
-5. Hardware detection
-6. NixOS installation
-
-### Non-Interactive Installation
-
-1. Copy the example config:
-   ```bash
-   cp config.example.sh config.sh
-   ```
-2. Edit `config.sh` with your settings
-3. Run with the config file:
-   ```bash
-   sudo ./install.sh --config config.sh
-   ```
-
-### Command Line Options
-
-| Option | Description |
-|--------|-------------|
-| `--help` | Show help message |
-| `--dry-run` | Show what would be done without making changes |
-| `--skip-disk` | Skip disk partitioning (use existing mounts) |
-| `--config FILE` | Use config file for non-interactive installation |
-
-### Updating an Installed System
-
-After installation, use `update.sh` to sync your system with changes to this repo:
+### Updating
 
 ```bash
-cd nixup
-git pull                    # Get latest changes
-sudo ./update.sh            # Apply to system
+cd /etc/nixos
+
+# Update flake inputs
+nix flake update
+
+# Rebuild with updates
+sudo nixos-rebuild switch --flake .#framework
 ```
 
-#### Update Options
-
-| Option | Description |
-|--------|-------------|
-| `--help` | Show help message |
-| `--test` | Build and activate, but don't persist (reverts on reboot) |
-| `--boot` | Build and add to bootloader, activate on next reboot |
-| `--dry-run` | Show what would be done without making changes |
-| `--no-backup` | Skip backing up existing configuration |
-| `--pull` | Pull latest git changes before updating |
-
-#### Examples
+### Garbage Collection
 
 ```bash
-sudo ./update.sh --pull        # Pull git changes and apply
-sudo ./update.sh --test        # Test changes (revert on reboot)
-sudo ./update.sh --dry-run     # Preview what would change
+# Remove old generations
+sudo nix-collect-garbage -d
+
+# Remove generations older than 7 days
+sudo nix-collect-garbage --delete-older-than 7d
 ```
 
-Backups of your previous configuration are saved to `/etc/nixos/backups/`.
-
-## Default Key Bindings (Niri)
+## Key Bindings
 
 | Key | Action |
 |-----|--------|
 | `Super + Return` | Open terminal (Ghostty) |
-| `Super + Space` | Open application launcher (Fuzzel) |
-| `Super + E` | File manager TUI (Yazi) |
+| `Super + Space` | Application launcher (Fuzzel) |
+| `Super + E` | File manager (Yazi in terminal) |
 | `Super + Q` | Close window |
 | `Super + L` | Lock screen |
-| `Super + 1-9` | Switch workspace |
+| `Super + Escape` | Power menu |
+| `Super + 1-9` | Switch to workspace |
 | `Super + Shift + 1-9` | Move window to workspace |
-| `Super + Arrow Keys` | Focus navigation |
-| `Super + Shift + Arrow Keys` | Move windows |
+| `Super + H/J/K/L` | Focus left/down/up/right |
+| `Super + Shift + H/J/K/L` | Move window left/down/up/right |
 | `Super + F` | Maximize column |
 | `Super + Shift + F` | Fullscreen window |
 | `Super + R` | Cycle column width presets |
 | `Print` | Screenshot |
-| `Super + Shift + Q` | Exit Niri |
 
-## Included Software
+## Applications
 
-> **Philosophy**: TUI applications are preferred over GUI when practical.
+### TUI-First Philosophy
 
-### Desktop Environment
-- **Niri** - Scrollable tiling Wayland compositor
-- **Waybar** - Status bar
-- **Fuzzel** - Application launcher
-- **Mako** - Notification daemon
-- **Swaylock** - Screen locker
+This configuration prefers TUI applications where practical:
 
-### Terminals & Editors
-- **Ghostty** - GPU-accelerated terminal (default)
-- **Alacritty/Foot** - Alternate terminals
-- **Neovim** - Default editor (LazyVim-ready)
-- **Zed** - Modern collaborative GUI editor
+- **File Manager**: Yazi (`Super + E`)
+- **Git**: Lazygit (`lg`)
+- **Docker**: Lazydocker (`lzd`)
+- **Kubernetes**: k9s (`kk`)
+- **System Monitor**: btop (`top`)
+- **Music**: ncspot
 
-### File Management (TUI first)
-- **Yazi** - TUI file manager (default, `Super+E`)
-- **PCManFM** - GUI fallback (`Super+Shift+E`)
+### Included Applications
 
-### Browsers & Communication
-- **Chromium** - Web browser
-- **Signal** - Encrypted messaging
-- **Discord** - Chat and voice
-- **Zoom** - Video conferencing
+- **Terminals**: Ghostty (default), Alacritty, Foot
+- **Editors**: Neovim, Zed
+- **Browsers**: Firefox, Chromium
+- **Communication**: Signal, Discord, Zoom
+- **Productivity**: LibreOffice, Obsidian, 1Password
 
-### Productivity
-- **LibreOffice** - Full office suite
-- **Obsidian** - Knowledge base / notes
-- **Typora** - Markdown editor
-- **1Password** - Password manager (CLI + GUI)
+## Shell Aliases
 
-### Media
-- **ncspot** - TUI Spotify client (default)
-- **Spotify** - GUI fallback
-- **OBS Studio** - Screen recording / streaming
-- **mpv** - Media player
+Modern CLI tool replacements are configured by default:
 
-### Development (TUI preferred)
-- **lazygit** - Git TUI (default)
-- **lazydocker** - Docker TUI
-- **k9s** - Kubernetes TUI
-- **tig** - Git log viewer TUI
-- **Docker** with Compose
-- **Git** with GitHub CLI
-- **Mise** - Multi-runtime version manager
-- **Python, Node.js, Go** with UV package manager
-
-### TUI Tools
-- **btop/htop/bottom** - System monitors
-- **ncdu** - Disk usage analyzer
-- **bandwhich** - Network utilization
-- **trippy** - Network diagnostics
-- **glow** - Markdown viewer
-- **fx** - JSON viewer
-
-### Modern CLI
-- **fzf** - Fuzzy finder
-- **ripgrep** - Fast search (rg)
-- **zoxide** - Smart cd replacement
-- **eza** - Modern ls replacement
-- **bat** - Cat with syntax highlighting
-- **fd** - Fast find alternative
-- **delta** - Better git diff
-- **jq/yq/xsv** - Data processors
-
-### Other
-- **LocalSend** - Cross-platform file sharing
-- **Qalculate** - Calculator
+| Alias | Command |
+|-------|---------|
+| `ls` | `eza --icons` |
+| `ll` | `eza -la --icons` |
+| `cat` | `bat` |
+| `grep` | `ripgrep` |
+| `find` | `fd` |
+| `top` | `btop` |
+| `lg` | `lazygit` |
+| `lzd` | `lazydocker` |
 
 ## Customization
 
-### Post-Installation Configuration
+### Adding Packages
 
-The NixOS configuration is located at `/etc/nixos/`:
-- `configuration.nix` - Main system configuration
-- `hardware-configuration.nix` - Auto-generated hardware config
-- `modules/` - Modular configurations
+Edit `modules/nixos/applications.nix` for system-wide packages.
 
-To modify and rebuild:
-```bash
-sudo nixos-rebuild switch
-```
+### User Configuration
 
-### Niri Configuration
+Edit files in `modules/home/` for user-level configuration managed by Home Manager.
 
-User Niri config is at `~/.config/niri/config.kdl`. See the [Niri Wiki](https://github.com/YaLTeR/niri/wiki/Configuration) for documentation.
+### Adding a New Host
 
-### Waybar Configuration
-
-Waybar config files are at:
-- `~/.config/waybar/config` - Module configuration
-- `~/.config/waybar/style.css` - Styling
-
-## Framework 13 Specific Features
-
-When a Framework laptop is detected, the installer enables:
-- **TLP** for advanced power management
-- **fwupd** for firmware updates
-- **Framework kernel module** for hardware support
-- **Ambient light sensor** support
-- Optimized CPU scaling governors for AC/battery
+1. Copy `hosts/framework/` to `hosts/yourhostname/`
+2. Update `flake.nix` to add the new configuration
+3. Generate hardware config: `nixos-generate-config`
+4. Customize `hosts/yourhostname/default.nix`
 
 ## Troubleshooting
 
-### Installation Logs
-Logs are saved to `/tmp/nixup-install.log`
+### Niri Not Starting
 
-### Common Issues
+Check the greetd logs:
+```bash
+journalctl -u greetd
+```
 
-**"Not running in NixOS installer environment"**
-- Make sure you're booted from the NixOS installation ISO
+### Audio Issues
 
-**"UEFI required"**
-- This installer only supports UEFI boot mode
-- Check your BIOS/firmware settings
+Ensure PipeWire is running:
+```bash
+systemctl --user status pipewire
+```
 
-**Network not working after install**
-- Ensure NetworkManager is enabled
-- Run `nmtui` to configure connections
+### Bluetooth Not Working
 
-**Display issues with Niri**
-- Check GPU drivers in `/etc/nixos/modules/hardware-custom.nix`
-- For HiDPI displays, edit `~/.config/niri/config.kdl` output settings
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit issues and pull requests.
+```bash
+systemctl status bluetooth
+bluetoothctl power on
+```
 
 ## License
 
-This project is open source. See individual files for specific licensing.
+MIT
 
-## Acknowledgments
+## Credits
 
-- [NixOS](https://nixos.org/) - The reproducible Linux distribution
-- [Niri](https://github.com/YaLTeR/niri) - A scrollable-tiling Wayland compositor
-- [Framework](https://frame.work/) - Repairable, upgradeable laptops
+- [Niri](https://github.com/YaLTeR/niri) - Wayland compositor
+- [Home Manager](https://github.com/nix-community/home-manager) - User configuration
+- [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) - Color scheme inspiration

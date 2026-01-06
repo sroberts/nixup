@@ -1,5 +1,4 @@
-# Shell configuration for NixOS
-# Zsh with modern CLI tool aliases and starship prompt
+# Shell configuration with Zsh and Starship
 { config, pkgs, lib, ... }:
 
 {
@@ -7,10 +6,9 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    autosuggestions.enable = true;
+    autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
-    # Shell aliases for modern CLI tools
     shellAliases = {
       # Navigation
       ".." = "cd ..";
@@ -23,10 +21,8 @@
       la = "eza -a --icons --group-directories-first";
       lt = "eza --tree --icons --level=2";
       tree = "eza --tree --icons";
-
       cat = "bat --paging=never";
       less = "bat";
-
       grep = "rg";
       find = "fd";
       du = "dust";
@@ -74,29 +70,26 @@
       weather = "curl -s 'wttr.in?format=3'";
 
       # NixOS
-      nrs = "sudo nixos-rebuild switch";
-      nrt = "sudo nixos-rebuild test";
-      nrb = "sudo nixos-rebuild boot";
+      nrs = "sudo nixos-rebuild switch --flake .#framework";
+      nrt = "sudo nixos-rebuild test --flake .#framework";
+      nrb = "sudo nixos-rebuild boot --flake .#framework";
       ncg = "sudo nix-collect-garbage -d";
       nse = "nix search nixpkgs";
     };
 
-    # Oh-my-zsh configuration
-    ohMyZsh = {
+    oh-my-zsh = {
       enable = true;
       plugins = [
         "git"
         "docker"
         "kubectl"
         "fzf"
-        "zoxide"
         "history"
         "sudo"
       ];
     };
 
-    # Additional zsh configuration
-    interactiveShellInit = ''
+    initExtra = ''
       # Add ~/.local/bin to PATH for user scripts
       export PATH="$HOME/.local/bin:$PATH"
 
@@ -116,25 +109,6 @@
         --color=marker:#e0af68,spinner:#bb9af7,header:#565f89
         --border --layout=reverse --height=40%
       '
-
-      # Bat theme
-      export BAT_THEME="TwoDark"
-
-      # Better history
-      HISTSIZE=50000
-      SAVEHIST=50000
-      setopt SHARE_HISTORY
-      setopt HIST_IGNORE_DUPS
-      setopt HIST_IGNORE_SPACE
-
-      # Directory navigation
-      setopt AUTO_CD
-      setopt AUTO_PUSHD
-      setopt PUSHD_IGNORE_DUPS
-
-      # Completion improvements
-      zstyle ':completion:*' menu select
-      zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
     '';
   };
 
@@ -142,82 +116,75 @@
   programs.starship = {
     enable = true;
     settings = {
-      # Minimal, clean prompt
       format = lib.concatStrings [
         "$directory"
         "$git_branch"
         "$git_status"
-        "$python"
-        "$nodejs"
-        "$golang"
-        "$rust"
         "$nix_shell"
-        "$cmd_duration"
-        "$line_break"
         "$character"
       ];
-
       directory = {
-        style = "bold cyan";
+        style = "blue bold";
         truncation_length = 3;
         truncate_to_repo = true;
       };
-
       git_branch = {
-        style = "bold purple";
-        format = "[$symbol$branch]($style) ";
+        symbol = " ";
+        style = "purple";
       };
-
       git_status = {
-        style = "bold red";
-        format = "[$all_status$ahead_behind]($style) ";
+        style = "red";
       };
-
-      character = {
-        success_symbol = "[❯](bold green)";
-        error_symbol = "[❯](bold red)";
-      };
-
-      cmd_duration = {
-        min_time = 2000;
-        style = "bold yellow";
-        format = "[$duration]($style) ";
-      };
-
       nix_shell = {
-        format = "[$symbol$state]($style) ";
         symbol = " ";
-        style = "bold blue";
+        style = "cyan";
       };
-
-      python = {
-        format = "[$symbol$version]($style) ";
-        symbol = " ";
-        style = "bold yellow";
-      };
-
-      nodejs = {
-        format = "[$symbol$version]($style) ";
-        symbol = " ";
-        style = "bold green";
-      };
-
-      golang = {
-        format = "[$symbol$version]($style) ";
-        symbol = " ";
-        style = "bold cyan";
-      };
-
-      rust = {
-        format = "[$symbol$version]($style) ";
-        symbol = " ";
-        style = "bold red";
+      character = {
+        success_symbol = "[❯](green)";
+        error_symbol = "[❯](red)";
       };
     };
   };
 
-  # Add starship to packages
-  environment.systemPackages = with pkgs; [
-    starship
-  ];
+  # FZF
+  programs.fzf = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  # Zoxide
+  programs.zoxide = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
+  # Bat (cat replacement)
+  programs.bat = {
+    enable = true;
+    config = {
+      theme = "TwoDark";
+      pager = "less -FR";
+    };
+  };
+
+  # Eza (ls replacement)
+  programs.eza = {
+    enable = true;
+    icons = "auto";
+    git = true;
+  };
+
+  # Ripgrep
+  programs.ripgrep = {
+    enable = true;
+  };
+
+  # Btop
+  programs.btop = {
+    enable = true;
+    settings = {
+      color_theme = "tokyo-night";
+      theme_background = false;
+    };
+  };
 }

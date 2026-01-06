@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# nixup - NixOS Installation Script for Niri
+# nixup - NixOS Flake Installation Script
 #
-# A modular, maintainable installer for NixOS with Niri Wayland compositor
-# Designed for Framework 13 laptops but works on other hardware too
+# A minimal installer that partitions the disk and runs nixos-install
+# with the flake configuration.
 #
 # Usage:
 #   ./install.sh [options]
@@ -11,35 +11,38 @@
 # Options:
 #   --help          Show this help message
 #   --dry-run       Show what would be done without making changes
-#   --skip-disk     Skip disk partitioning (use existing mounts)
-#   --config FILE   Use existing config file for non-interactive install
+#   --no-encrypt    Skip LUKS encryption
 #
 
 set -euo pipefail
 
-# Get the directory where this script is located
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+RESET='\033[0m'
+
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Load library functions
-source "${SCRIPT_DIR}/lib/colors.sh"
-source "${SCRIPT_DIR}/lib/logging.sh"
-source "${SCRIPT_DIR}/lib/prompts.sh"
-source "${SCRIPT_DIR}/lib/utils.sh"
-
-# Load modules
-source "${SCRIPT_DIR}/modules/disk.sh"
-source "${SCRIPT_DIR}/modules/user.sh"
-source "${SCRIPT_DIR}/modules/hardware.sh"
-source "${SCRIPT_DIR}/modules/nixos-config.sh"
-
-# Global options
+# Options
 DRY_RUN=false
-SKIP_DISK=false
-CONFIG_FILE=""
+USE_ENCRYPTION=true
+DISK=""
+SWAP_SIZE=""
+
+# Logging functions
+log_info() { echo -e "${CYAN}[INFO]${RESET} $1"; }
+log_success() { echo -e "${GREEN}[OK]${RESET} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${RESET} $1"; }
+log_error() { echo -e "${RED}[ERROR]${RESET} $1"; }
 
 # Print banner
 print_banner() {
-    echo -e "${BOLD_CYAN}"
+    echo -e "${CYAN}"
     cat << 'EOF'
     _   _ _      _   _
    | \ | (_)_  _| | | |_ __
@@ -47,10 +50,10 @@ print_banner() {
    | |\  | |>  <| |_| | |_) |
    |_| \_|_/_/\_\\___/| .__/
                       |_|
-   NixOS + Niri Installer
+   NixOS + Niri Flake Installer
 EOF
     echo -e "${RESET}"
-    echo -e "${CYAN}Framework 13 optimized • Modular • Maintainable${RESET}"
+    echo -e "${CYAN}Framework 13 optimized • Flake-based • Declarative${RESET}"
     echo ""
 }
 
@@ -62,22 +65,22 @@ Usage: $(basename "$0") [options]
 Options:
     --help          Show this help message
     --dry-run       Show what would be done without making changes
-    --skip-disk     Skip disk partitioning (use existing mounts)
-    --config FILE   Use existing config file for non-interactive install
+    --no-encrypt    Skip LUKS encryption
 
 This script will:
   1. Partition and format your disk (with optional LUKS encryption)
-  2. Configure your user account and system settings
-  3. Detect hardware and generate optimized NixOS configuration
-  4. Install NixOS with Niri Wayland compositor
+  2. Generate hardware configuration
+  3. Install NixOS using the flake
 
-For Framework 13 laptops, additional hardware optimizations are included.
+After installation:
+  - Edit hosts/framework/default.nix to set your username
+  - Run: nixos-rebuild switch --flake .#framework
 
 Report issues: https://github.com/sroberts/nixup/issues
 EOF
 }
 
-# Parse command line arguments
+# Parse arguments
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -87,21 +90,12 @@ parse_args() {
                 ;;
             --dry-run)
                 DRY_RUN=true
-                log_warn "Dry-run mode enabled - no changes will be made"
+                log_warn "Dry-run mode enabled"
                 shift
                 ;;
-            --skip-disk)
-                SKIP_DISK=true
-                log_info "Skipping disk partitioning"
+            --no-encrypt)
+                USE_ENCRYPTION=false
                 shift
-                ;;
-            --config)
-                CONFIG_FILE="$2"
-                if [[ ! -f "$CONFIG_FILE" ]]; then
-                    log_fatal "Config file not found: $CONFIG_FILE"
-                fi
-                log_info "Using config file: $CONFIG_FILE"
-                shift 2
                 ;;
             *)
                 log_error "Unknown option: $1"
@@ -112,188 +106,277 @@ parse_args() {
     done
 }
 
-# Pre-flight checks
-preflight_checks() {
-    log_info "Running pre-flight checks..."
+# Check if running as root
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        log_error "This script must be run as root"
+        exit 1
+    fi
+}
 
-    # Check for root
-    require_root
+# Select disk
+select_disk() {
+    log_info "Available disks:"
+    echo ""
+    lsblk -d -o NAME,SIZE,MODEL | grep -v "loop\|sr\|NAME"
+    echo ""
 
-    # Check for NixOS environment
-    if ! check_nixos_env; then
-        log_fatal "This script must be run from the NixOS installer environment"
+    read -rp "Enter disk to install on (e.g., nvme0n1, sda): " disk_name
+    DISK="/dev/${disk_name}"
+
+    if [[ ! -b "$DISK" ]]; then
+        log_error "Disk not found: $DISK"
+        exit 1
     fi
 
-    # Check for UEFI
-    if ! is_efi; then
-        log_fatal "This installer requires UEFI boot mode"
+    echo ""
+    log_warn "WARNING: All data on $DISK will be destroyed!"
+    read -rp "Type 'yes' to continue: " confirm
+    if [[ "$confirm" != "yes" ]]; then
+        log_error "Aborted"
+        exit 1
+    fi
+}
+
+# Get swap size
+get_swap_size() {
+    local ram_gb
+    ram_gb=$(awk '/MemTotal/ {printf "%.0f", $2/1024/1024}' /proc/meminfo)
+
+    echo ""
+    log_info "System has ${ram_gb}GB RAM"
+    read -rp "Swap size (e.g., 8G, 16G, or 'none'): " SWAP_SIZE
+
+    if [[ "$SWAP_SIZE" == "none" ]]; then
+        SWAP_SIZE=""
+    fi
+}
+
+# Get encryption password
+get_encryption_password() {
+    if [[ "$USE_ENCRYPTION" != true ]]; then
+        return
     fi
 
-    # Check for internet connectivity
-    if ! ping -c 1 nixos.org &> /dev/null; then
-        log_warn "No internet connection detected. Installation may fail."
-        if ! confirm "Continue without internet?" "n"; then
-            log_fatal "Installation cancelled"
+    echo ""
+    log_info "Setting up LUKS encryption"
+
+    while true; do
+        read -rsp "Enter encryption password: " pass1
+        echo ""
+        read -rsp "Confirm encryption password: " pass2
+        echo ""
+
+        if [[ "$pass1" == "$pass2" ]]; then
+            LUKS_PASSWORD="$pass1"
+            break
+        else
+            log_error "Passwords don't match, try again"
         fi
-    fi
-
-    log_success "Pre-flight checks passed"
+    done
 }
 
-# Show configuration summary
-show_summary() {
-    echo ""
-    echo -e "${BOLD_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${BOLD_WHITE}  Installation Summary${RESET}"
-    echo -e "${BOLD_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo ""
-    echo -e "  ${CYAN}Disk:${RESET}         ${DISK:-N/A}"
-    echo -e "  ${CYAN}Encryption:${RESET}   ${USE_ENCRYPTION:-false}"
-    echo -e "  ${CYAN}Swap:${RESET}         ${SWAP_SIZE:-none}"
-    echo ""
-    echo -e "  ${CYAN}Username:${RESET}     ${USERNAME:-N/A}"
-    echo -e "  ${CYAN}Hostname:${RESET}     ${HOSTNAME:-N/A}"
-    echo -e "  ${CYAN}Timezone:${RESET}     automatic"
-    echo -e "  ${CYAN}Locale:${RESET}       ${LOCALE:-N/A}"
-    echo -e "  ${CYAN}Keyboard:${RESET}     ${KEYBOARD_LAYOUT:-N/A}"
-    echo ""
-    echo -e "  ${CYAN}CPU:${RESET}          ${CPU_VENDOR:-unknown}"
-    echo -e "  ${CYAN}GPU:${RESET}          ${GPU_VENDOR:-unknown}"
-    echo -e "  ${CYAN}Laptop:${RESET}       ${IS_LAPTOP:-false}"
-    echo -e "  ${CYAN}Framework:${RESET}    ${IS_FRAMEWORK:-false}"
-    echo ""
-    echo -e "${BOLD_BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo ""
-}
-
-# Run NixOS installation
-run_nixos_install() {
-    log_step "5" "NixOS Installation"
+# Partition disk
+partition_disk() {
+    log_info "Partitioning $DISK..."
 
     if [[ "$DRY_RUN" == true ]]; then
-        log_info "[DRY-RUN] Would run: nixos-install --no-root-passwd"
-        return 0
+        log_info "[DRY-RUN] Would partition $DISK"
+        return
     fi
 
-    log_info "Running nixos-install..."
-    log_info "This may take a while..."
+    # Wipe existing partitions
+    wipefs -af "$DISK"
+    sgdisk -Z "$DISK"
 
-    if nixos-install --no-root-passwd; then
-        log_success "NixOS installation complete!"
+    # Create GPT partition table
+    sgdisk -o "$DISK"
+
+    # EFI partition (512MB)
+    sgdisk -n 1:0:+512M -t 1:ef00 -c 1:"EFI" "$DISK"
+
+    # Swap partition (if requested)
+    local part_num=2
+    if [[ -n "$SWAP_SIZE" ]]; then
+        sgdisk -n 2:0:+${SWAP_SIZE} -t 2:8200 -c 2:"swap" "$DISK"
+        part_num=3
+    fi
+
+    # Root partition (remaining space)
+    sgdisk -n ${part_num}:0:0 -t ${part_num}:8300 -c ${part_num}:"root" "$DISK"
+
+    # Update kernel partition table
+    partprobe "$DISK"
+    sleep 2
+
+    log_success "Disk partitioned"
+}
+
+# Get partition paths
+get_partitions() {
+    # Handle NVMe vs SATA naming
+    if [[ "$DISK" == *"nvme"* ]]; then
+        EFI_PART="${DISK}p1"
+        if [[ -n "$SWAP_SIZE" ]]; then
+            SWAP_PART="${DISK}p2"
+            ROOT_PART="${DISK}p3"
+        else
+            ROOT_PART="${DISK}p2"
+        fi
     else
-        log_fatal "NixOS installation failed. Check the log at ${LOG_FILE}"
+        EFI_PART="${DISK}1"
+        if [[ -n "$SWAP_SIZE" ]]; then
+            SWAP_PART="${DISK}2"
+            ROOT_PART="${DISK}3"
+        else
+            ROOT_PART="${DISK}2"
+        fi
     fi
 }
 
-# Post-installation tasks
-post_install() {
-    log_step "6" "Post-Installation"
-
-    local username="${USERNAME:-user}"
-
-    # Set correct ownership of home directory
-    if [[ -d "/mnt/home/${username}" ]]; then
-        log_info "Setting home directory ownership..."
-        # Get the UID from the installed system
-        local uid
-        uid=$(nixos-enter --root /mnt -- id -u "$username" 2>/dev/null || echo "1000")
-        chown -R "${uid}:${uid}" "/mnt/home/${username}"
+# Setup encryption
+setup_encryption() {
+    if [[ "$USE_ENCRYPTION" != true ]]; then
+        return
     fi
 
-    # Create Pictures/Screenshots directory
-    ensure_dir "/mnt/home/${username}/Pictures/Screenshots"
+    log_info "Setting up LUKS encryption..."
 
-    log_success "Post-installation tasks complete"
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would encrypt $ROOT_PART"
+        return
+    fi
+
+    # Store original partition for hardware config
+    LUKS_DEVICE="$ROOT_PART"
+
+    # Encrypt root
+    echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type luks2 \
+        --cipher aes-xts-plain64 \
+        --key-size 512 \
+        --hash sha512 \
+        --iter-time 5000 \
+        "$ROOT_PART" -
+
+    # Open encrypted partition
+    echo -n "$LUKS_PASSWORD" | cryptsetup open "$ROOT_PART" cryptroot -
+    ROOT_PART="/dev/mapper/cryptroot"
+
+    log_success "Encryption configured"
 }
 
-# Cleanup function
-cleanup() {
-    local exit_code=$?
+# Format partitions
+format_partitions() {
+    log_info "Formatting partitions..."
 
-    if [[ $exit_code -ne 0 ]]; then
-        log_error "Installation failed with exit code: $exit_code"
-        log_info "Log file: ${LOG_FILE}"
-
-        # Attempt to unmount on failure
-        if mountpoint -q /mnt/boot 2>/dev/null; then
-            umount /mnt/boot 2>/dev/null || true
-        fi
-        if mountpoint -q /mnt 2>/dev/null; then
-            umount /mnt 2>/dev/null || true
-        fi
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would format partitions"
+        return
     fi
 
-    exit $exit_code
+    # Format EFI
+    mkfs.fat -F32 -n EFI "$EFI_PART"
+
+    # Format swap
+    if [[ -n "${SWAP_PART:-}" ]]; then
+        mkswap -L swap "$SWAP_PART"
+    fi
+
+    # Format root
+    mkfs.ext4 -L nixos "$ROOT_PART"
+
+    log_success "Partitions formatted"
 }
 
-# Main installation function
-main() {
-    # Set up trap for cleanup
-    trap cleanup EXIT
+# Mount partitions
+mount_partitions() {
+    log_info "Mounting partitions..."
 
-    # Initialize logging
-    init_logging
-
-    # Print banner
-    print_banner
-
-    # Parse command line arguments
-    parse_args "$@"
-
-    # Run pre-flight checks
-    preflight_checks
-
-    # Load config file if provided
-    if [[ -n "$CONFIG_FILE" ]]; then
-        log_info "Loading configuration from file..."
-        # shellcheck source=/dev/null
-        source "$CONFIG_FILE"
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would mount partitions"
+        return
     fi
 
-    # Step 1: Disk Setup
-    if [[ "$SKIP_DISK" != true ]]; then
-        setup_disk
-    else
-        log_info "Skipping disk setup - using existing mounts"
-        if ! mountpoint -q /mnt; then
-            log_fatal "/mnt is not mounted. Mount your partitions or remove --skip-disk"
-        fi
+    mount "$ROOT_PART" /mnt
+    mkdir -p /mnt/boot
+    mount "$EFI_PART" /mnt/boot
+
+    if [[ -n "${SWAP_PART:-}" ]]; then
+        swapon "$SWAP_PART"
     fi
 
-    # Step 2: User Configuration
-    setup_user
+    log_success "Partitions mounted"
+}
 
-    # Step 3: Hardware Detection
-    setup_hardware
+# Generate hardware configuration
+generate_hardware_config() {
+    log_info "Generating hardware configuration..."
 
-    # Show summary and confirm
-    show_summary
-
-    if ! confirm "Proceed with installation?" "y"; then
-        log_fatal "Installation cancelled by user"
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would generate hardware config"
+        return
     fi
 
-    # Step 4: Generate NixOS Configuration
-    generate_nixos_config
+    # Generate to temp location
+    nixos-generate-config --root /mnt
 
-    # Step 5: Run NixOS Install
-    run_nixos_install
+    # Copy to our flake's host directory
+    cp /mnt/etc/nixos/hardware-configuration.nix "${SCRIPT_DIR}/hosts/framework/hardware-configuration.nix"
 
-    # Step 6: Post-installation
-    post_install
+    # Add LUKS configuration if encrypted
+    if [[ "$USE_ENCRYPTION" == true && -n "${LUKS_DEVICE:-}" ]]; then
+        local luks_uuid
+        luks_uuid=$(blkid -s UUID -o value "$LUKS_DEVICE")
 
-    # Success!
+        # Append LUKS config to hardware-configuration.nix
+        cat >> "${SCRIPT_DIR}/hosts/framework/hardware-configuration.nix" << EOF
+
+  # LUKS encryption
+  boot.initrd.luks.devices = {
+    cryptroot = {
+      device = "/dev/disk/by-uuid/${luks_uuid}";
+      preLVM = true;
+      allowDiscards = true;
+    };
+  };
+EOF
+    fi
+
+    log_success "Hardware configuration generated"
+}
+
+# Run nixos-install
+run_install() {
+    log_info "Installing NixOS..."
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would run: nixos-install --flake ${SCRIPT_DIR}#framework --no-root-passwd"
+        return
+    fi
+
+    # Copy flake to /mnt for installation
+    mkdir -p /mnt/etc/nixos
+    cp -r "${SCRIPT_DIR}"/* /mnt/etc/nixos/
+
+    # Install
+    nixos-install --flake "/mnt/etc/nixos#framework" --no-root-passwd
+
+    log_success "NixOS installed!"
+}
+
+# Show completion message
+show_completion() {
     echo ""
-    echo -e "${BOLD_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo -e "${BOLD_GREEN}  Installation Complete!${RESET}"
-    echo -e "${BOLD_GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    echo -e "${GREEN}  Installation Complete!${RESET}"
+    echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
     echo ""
-    echo -e "  Your NixOS system with Niri is ready!"
-    echo ""
-    echo -e "  ${CYAN}To finish:${RESET}"
+    echo -e "  ${CYAN}Next steps:${RESET}"
     echo -e "    1. Reboot into your new system"
-    echo -e "    2. Log in as ${BOLD_WHITE}${USERNAME}${RESET}"
-    echo -e "    3. Niri will start automatically"
+    echo -e "    2. Log in (default user: 'user', set password with passwd)"
+    echo -e "    3. Edit /etc/nixos/hosts/framework/default.nix"
+    echo -e "       - Set your username and other preferences"
+    echo -e "    4. Apply changes: ${WHITE}sudo nixos-rebuild switch --flake /etc/nixos#framework${RESET}"
     echo ""
     echo -e "  ${CYAN}Key bindings:${RESET}"
     echo -e "    ${WHITE}Super + Return${RESET}  - Open terminal"
@@ -301,14 +384,47 @@ main() {
     echo -e "    ${WHITE}Super + Q${RESET}       - Close window"
     echo -e "    ${WHITE}Super + 1-9${RESET}     - Switch workspace"
     echo ""
-    echo -e "  ${CYAN}Configuration location:${RESET}"
-    echo -e "    /etc/nixos/configuration.nix"
+    echo -e "  ${CYAN}Configuration:${RESET}"
+    echo -e "    /etc/nixos/flake.nix"
     echo ""
 
-    if confirm "Reboot now?" "y"; then
+    read -rp "Reboot now? [y/N]: " reboot_confirm
+    if [[ "$reboot_confirm" =~ ^[Yy]$ ]]; then
         reboot
     fi
 }
 
-# Run main
+# Main
+main() {
+    print_banner
+    parse_args "$@"
+    check_root
+
+    echo -e "${CYAN}Step 1: Disk Selection${RESET}"
+    select_disk
+    get_swap_size
+
+    if [[ "$USE_ENCRYPTION" == true ]]; then
+        get_encryption_password
+    fi
+
+    echo ""
+    echo -e "${CYAN}Step 2: Partitioning${RESET}"
+    partition_disk
+    get_partitions
+    setup_encryption
+    format_partitions
+    mount_partitions
+
+    echo ""
+    echo -e "${CYAN}Step 3: Configuration${RESET}"
+    generate_hardware_config
+
+    echo ""
+    echo -e "${CYAN}Step 4: Installation${RESET}"
+    run_install
+
+    show_completion
+}
+
 main "$@"
