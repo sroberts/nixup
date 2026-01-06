@@ -387,7 +387,7 @@ hotkey-overlay {
 binds {
     Mod+Return { spawn "ghostty"; }
     Mod+Space { spawn "fuzzel"; }
-    Mod+E { spawn "pcmanfm"; }
+    Mod+E { spawn "ghostty" "-e" "yazi"; }
     Mod+Q { close-window; }
     Mod+Shift+Q { quit; }
     Mod+L { spawn "swaylock"; }

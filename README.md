@@ -101,7 +101,7 @@ The installer will guide you through:
 |-----|--------|
 | `Super + Return` | Open terminal (Ghostty) |
 | `Super + Space` | Open application launcher (Fuzzel) |
-| `Super + E` | Open file manager |
+| `Super + E` | File manager TUI (Yazi) |
 | `Super + Q` | Close window |
 | `Super + L` | Lock screen |
 | `Super + 1-9` | Switch workspace |
@@ -116,6 +116,8 @@ The installer will guide you through:
 
 ## Included Software
 
+> **Philosophy**: TUI applications are preferred over GUI when practical.
+
 ### Desktop Environment
 - **Niri** - Scrollable tiling Wayland compositor
 - **Waybar** - Status bar
@@ -126,8 +128,12 @@ The installer will guide you through:
 ### Terminals & Editors
 - **Ghostty** - GPU-accelerated terminal (default)
 - **Alacritty/Foot** - Alternate terminals
-- **Neovim** - Default editor (with LazyVim-ready config)
-- **Zed** - Modern collaborative editor
+- **Neovim** - Default editor (LazyVim-ready)
+- **Zed** - Modern collaborative GUI editor
+
+### File Management (TUI first)
+- **Yazi** - TUI file manager (default, `Super+E`)
+- **PCManFM** - GUI fallback (`Super+Shift+E`)
 
 ### Browsers & Communication
 - **Chromium** - Web browser
@@ -139,31 +145,45 @@ The installer will guide you through:
 - **LibreOffice** - Full office suite
 - **Obsidian** - Knowledge base / notes
 - **Typora** - Markdown editor
-- **1Password** - Password manager
+- **1Password** - Password manager (CLI + GUI)
 
 ### Media
-- **Spotify** - Music streaming
+- **ncspot** - TUI Spotify client (default)
+- **Spotify** - GUI fallback
 - **OBS Studio** - Screen recording / streaming
 - **mpv** - Media player
 
-### Development
-- **Docker** with Compose and Lazydocker TUI
-- **Git** with GitHub CLI and Lazygit
+### Development (TUI preferred)
+- **lazygit** - Git TUI (default)
+- **lazydocker** - Docker TUI
+- **k9s** - Kubernetes TUI
+- **tig** - Git log viewer TUI
+- **Docker** with Compose
+- **Git** with GitHub CLI
 - **Mise** - Multi-runtime version manager
 - **Python, Node.js, Go** with UV package manager
 
-### Modern CLI Tools
+### TUI Tools
+- **btop/htop/bottom** - System monitors
+- **ncdu** - Disk usage analyzer
+- **bandwhich** - Network utilization
+- **trippy** - Network diagnostics
+- **glow** - Markdown viewer
+- **fx** - JSON viewer
+
+### Modern CLI
 - **fzf** - Fuzzy finder
 - **ripgrep** - Fast search (rg)
 - **zoxide** - Smart cd replacement
 - **eza** - Modern ls replacement
 - **bat** - Cat with syntax highlighting
-- **btop/htop** - System monitors
+- **fd** - Fast find alternative
 - **delta** - Better git diff
+- **jq/yq/xsv** - Data processors
 
 ### Other
 - **LocalSend** - Cross-platform file sharing
-- **Calculator** - GNOME calculator
+- **Qalculate** - Calculator
 
 ## Customization
 

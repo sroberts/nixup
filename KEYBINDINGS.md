@@ -9,9 +9,10 @@ All keybindings use **Super** (Windows key) as the modifier.
 | `Super + Space` | Application launcher (Fuzzel) |
 | `Super + Return` | Terminal (Ghostty) |
 | `Super + Shift + Return` | Alternate terminal (Alacritty) |
-| `Super + E` | File manager (PCManFM) |
+| `Super + E` | File manager TUI (Yazi) |
+| `Super + Shift + E` | File manager GUI (PCManFM) |
 | `Super + L` | Lock screen |
-| `Super + Shift + E` | Power menu (logout/suspend/reboot/shutdown) |
+| `Super + Escape` | Power menu (logout/suspend/reboot/shutdown) |
 
 ## Windows
 
@@ -104,7 +105,7 @@ These work even when the screen is locked.
 | Key | Action |
 |-----|--------|
 | `Super + L` | Lock screen |
-| `Super + Shift + E` | Power menu |
+| `Super + Escape` | Power menu |
 | `Super + Shift + Q` | Exit Niri |
 
 ## Niri Concepts

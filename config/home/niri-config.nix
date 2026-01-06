@@ -112,8 +112,9 @@
         // Application launcher
         Mod+Space { spawn "fuzzel"; }
 
-        // File manager
-        Mod+E { spawn "pcmanfm"; }
+        // File manager (TUI default, GUI fallback)
+        Mod+E { spawn "ghostty" "-e" "yazi"; }
+        Mod+Shift+E { spawn "pcmanfm"; }
 
         // Close window
         Mod+Q { close-window; }
@@ -210,7 +211,7 @@
         XF86AudioPrev  { spawn "playerctl" "previous"; }
 
         // Power menu (using fuzzel)
-        Mod+Shift+E { spawn "bash" "-c" "echo -e 'logout\nsuspend\nreboot\nshutdown' | fuzzel --dmenu | xargs -I {} bash -c 'case {} in logout) niri msg action quit;; suspend) systemctl suspend;; reboot) systemctl reboot;; shutdown) systemctl poweroff;; esac'"; }
+        Mod+Escape { spawn "bash" "-c" "echo -e 'logout\nsuspend\nreboot\nshutdown' | fuzzel --dmenu | xargs -I {} bash -c 'case {} in logout) niri msg action quit;; suspend) systemctl suspend;; reboot) systemctl reboot;; shutdown) systemctl poweroff;; esac'"; }
     }
 
     // Window rules
