@@ -95,6 +95,37 @@ The installer will guide you through:
 | `--skip-disk` | Skip disk partitioning (use existing mounts) |
 | `--config FILE` | Use config file for non-interactive installation |
 
+### Updating an Installed System
+
+After installation, use `update.sh` to sync your system with changes to this repo:
+
+```bash
+cd nixup
+git pull                    # Get latest changes
+sudo ./update.sh            # Apply to system
+```
+
+#### Update Options
+
+| Option | Description |
+|--------|-------------|
+| `--help` | Show help message |
+| `--test` | Build and activate, but don't persist (reverts on reboot) |
+| `--boot` | Build and add to bootloader, activate on next reboot |
+| `--dry-run` | Show what would be done without making changes |
+| `--no-backup` | Skip backing up existing configuration |
+| `--pull` | Pull latest git changes before updating |
+
+#### Examples
+
+```bash
+sudo ./update.sh --pull        # Pull git changes and apply
+sudo ./update.sh --test        # Test changes (revert on reboot)
+sudo ./update.sh --dry-run     # Preview what would change
+```
+
+Backups of your previous configuration are saved to `/etc/nixos/backups/`.
+
 ## Default Key Bindings (Niri)
 
 | Key | Action |
