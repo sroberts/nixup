@@ -9,10 +9,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    niri = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    niri.url = "github:sodiboo/niri-flake";
   };
 
   outputs = { self, nixpkgs, home-manager, niri, ... }@inputs:
