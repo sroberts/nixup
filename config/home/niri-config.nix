@@ -111,7 +111,6 @@
 
         // Application launcher
         Mod+Space { spawn "fuzzel"; }
-        Mod+D { spawn "wofi" "--show" "drun"; }
 
         // File manager
         Mod+E { spawn "pcmanfm"; }
@@ -210,8 +209,8 @@
         XF86AudioNext  { spawn "playerctl" "next"; }
         XF86AudioPrev  { spawn "playerctl" "previous"; }
 
-        // Power menu (using wofi)
-        Mod+Shift+E { spawn "bash" "-c" "echo -e 'logout\nsuspend\nreboot\nshutdown' | wofi --show dmenu | xargs -I {} bash -c 'case {} in logout) niri msg action quit;; suspend) systemctl suspend;; reboot) systemctl reboot;; shutdown) systemctl poweroff;; esac'"; }
+        // Power menu (using fuzzel)
+        Mod+Shift+E { spawn "bash" "-c" "echo -e 'logout\nsuspend\nreboot\nshutdown' | fuzzel --dmenu | xargs -I {} bash -c 'case {} in logout) niri msg action quit;; suspend) systemctl suspend;; reboot) systemctl reboot;; shutdown) systemctl poweroff;; esac'"; }
     }
 
     // Window rules

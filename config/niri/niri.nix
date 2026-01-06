@@ -52,7 +52,6 @@
 
     # Application launcher
     fuzzel
-    wofi
 
     # Status bar
     waybar
