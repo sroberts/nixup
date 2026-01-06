@@ -100,7 +100,7 @@ The installer will guide you through:
 | Key | Action |
 |-----|--------|
 | `Super + Return` | Open terminal (Alacritty) |
-| `Super + D` | Open application launcher (Fuzzel) |
+| `Super + Space` | Open application launcher (Fuzzel) |
 | `Super + E` | Open file manager |
 | `Super + Q` | Close window |
 | `Super + L` | Lock screen |

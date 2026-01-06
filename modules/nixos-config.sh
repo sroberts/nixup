@@ -382,7 +382,7 @@ hotkey-overlay {
 
 binds {
     Mod+Return { spawn "alacritty"; }
-    Mod+D { spawn "fuzzel"; }
+    Mod+Space { spawn "fuzzel"; }
     Mod+E { spawn "pcmanfm"; }
     Mod+Q { close-window; }
     Mod+Shift+Q { quit; }

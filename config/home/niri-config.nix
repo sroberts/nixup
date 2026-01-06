@@ -110,8 +110,8 @@
         Mod+Shift+Return { spawn "foot"; }
 
         // Application launcher
-        Mod+D { spawn "fuzzel"; }
-        Mod+Space { spawn "wofi" "--show" "drun"; }
+        Mod+Space { spawn "fuzzel"; }
+        Mod+D { spawn "wofi" "--show" "drun"; }
 
         // File manager
         Mod+E { spawn "pcmanfm"; }
