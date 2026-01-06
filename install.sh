@@ -297,7 +297,7 @@ main() {
     echo ""
     echo -e "  ${CYAN}Key bindings:${RESET}"
     echo -e "    ${WHITE}Super + Return${RESET}  - Open terminal"
-    echo -e "    ${WHITE}Super + D${RESET}       - Application launcher"
+    echo -e "    ${WHITE}Super + Space${RESET}   - Application launcher"
     echo -e "    ${WHITE}Super + Q${RESET}       - Close window"
     echo -e "    ${WHITE}Super + 1-9${RESET}     - Switch workspace"
     echo ""
