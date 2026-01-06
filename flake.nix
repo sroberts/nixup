@@ -15,14 +15,19 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, niri, ... }@inputs: {
+  outputs = { self, nixpkgs, home-manager, niri, ... }@inputs:
+  let
+    # Load local configuration
+    local = import ./hosts/framework/local.nix;
+  in
+  {
     nixosConfigurations = {
       # Default Framework 13 configuration
       # Usage: nixos-install --flake .#framework
       # Or: nixos-rebuild switch --flake .#framework
       framework = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        specialArgs = { inherit inputs; };
+        specialArgs = { inherit inputs local; };
         modules = [
           # Niri flake module
           niri.nixosModules.niri
@@ -36,8 +41,7 @@
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
-              extraSpecialArgs = { inherit inputs; };
-              # Users are configured in hosts/framework/default.nix
+              extraSpecialArgs = { inherit inputs local; };
             };
           }
         ];

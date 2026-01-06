@@ -1,13 +1,13 @@
 # Git configuration
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, local, ... }:
 
 {
   programs.git = {
     enable = true;
 
-    # User info - override these in your config
-    userName = ""; # Set your name
-    userEmail = ""; # Set your email
+    # User info from local.nix
+    userName = local.gitUsername;
+    userEmail = local.gitEmail;
 
     extraConfig = {
       init.defaultBranch = "main";

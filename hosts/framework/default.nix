@@ -1,5 +1,5 @@
 # Framework 13 laptop configuration
-{ config, pkgs, lib, inputs, ... }:
+{ config, pkgs, lib, inputs, local, ... }:
 
 {
   imports = [
@@ -13,8 +13,8 @@
     ../../modules/nixos/framework.nix
   ];
 
-  # System hostname - override this in your local config if needed
-  networking.hostName = "framework";
+  # System hostname
+  networking.hostName = local.hostname;
 
   # Localization
   # Timezone is handled by automatic-timezoned service
@@ -35,18 +35,16 @@
   console.keyMap = "us";
 
   # User account
-  # Change 'user' to your username
-  users.users.user = {
+  users.users.${local.username} = {
     isNormalUser = true;
-    description = "User";
+    description = local.fullName;
     extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" "docker" ];
     shell = pkgs.zsh;
-    # Set password with: passwd user
-    # Or use hashedPassword for declarative password
+    hashedPassword = local.hashedPassword;
   };
 
   # Home Manager configuration for the user
-  home-manager.users.user = import ../../modules/home;
+  home-manager.users.${local.username} = import ../../modules/home;
 
   # Firmware
   hardware.enableRedistributableFirmware = true;
