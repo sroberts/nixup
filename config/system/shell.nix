@@ -97,6 +97,9 @@
 
     # Additional zsh configuration
     interactiveShellInit = ''
+      # Add ~/.local/bin to PATH for user scripts
+      export PATH="$HOME/.local/bin:$PATH"
+
       # Initialize zoxide
       eval "$(zoxide init zsh)"
 

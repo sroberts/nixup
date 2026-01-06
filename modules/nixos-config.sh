@@ -391,6 +391,7 @@ binds {
     Mod+Q { close-window; }
     Mod+Shift+Q { quit; }
     Mod+L { spawn "swaylock"; }
+    Mod+Escape { spawn "power-menu"; }
 
     Print { screenshot; }
     Mod+Print { screenshot-screen; }
@@ -491,6 +492,22 @@ EOF
     if [[ -d "${dotfiles_dir}/yazi" ]]; then
         ensure_dir "${config_dir}/yazi"
         cp "${dotfiles_dir}/yazi/"*.toml "${config_dir}/yazi/" 2>/dev/null || true
+    fi
+
+    # Copy user scripts to ~/.local/bin
+    local scripts_dir="${SCRIPT_DIR}/../scripts"
+    local local_bin="${home_dir}/.local/bin"
+    if [[ -d "${scripts_dir}" ]]; then
+        ensure_dir "${local_bin}"
+        for script in "${scripts_dir}"/*.sh; do
+            if [[ -f "$script" ]]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                cp "$script" "${local_bin}/${script_name}"
+                chmod +x "${local_bin}/${script_name}"
+            fi
+        done
+        log_success "User scripts installed to ~/.local/bin"
     fi
 
     # Set ownership

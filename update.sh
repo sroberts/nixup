@@ -429,8 +429,25 @@ copy_dotfiles() {
         log_success "Updated Yazi config"
     fi
 
+    # User scripts
+    local scripts_dir="${SCRIPT_DIR}/scripts"
+    local local_bin="${home_dir}/.local/bin"
+    if [[ -d "${scripts_dir}" ]]; then
+        mkdir -p "${local_bin}"
+        for script in "${scripts_dir}"/*.sh; do
+            if [[ -f "$script" ]]; then
+                local script_name
+                script_name=$(basename "$script" .sh)
+                cp "$script" "${local_bin}/${script_name}"
+                chmod +x "${local_bin}/${script_name}"
+            fi
+        done
+        log_success "Updated user scripts in ~/.local/bin"
+    fi
+
     # Fix ownership
     chown -R "${username}:${username}" "$config_dir"
+    chown -R "${username}:${username}" "${local_bin}" 2>/dev/null || true
     chown "${username}:${username}" "${home_dir}/.gitconfig" 2>/dev/null || true
 
     log_success "Dotfiles updated for user: $username"

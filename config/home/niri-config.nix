@@ -210,8 +210,8 @@
         XF86AudioNext  { spawn "playerctl" "next"; }
         XF86AudioPrev  { spawn "playerctl" "previous"; }
 
-        // Power menu (using fuzzel)
-        Mod+Escape { spawn "bash" "-c" "echo -e 'logout\nsuspend\nreboot\nshutdown' | fuzzel --dmenu | xargs -I {} bash -c 'case {} in logout) niri msg action quit;; suspend) systemctl suspend;; reboot) systemctl reboot;; shutdown) systemctl poweroff;; esac'"; }
+        // Power menu
+        Mod+Escape { spawn "power-menu"; }
     }
 
     // Window rules
