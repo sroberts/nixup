@@ -272,6 +272,41 @@ EOF
     log_success "local.nix generated"
 }
 
+# Prepare disk by cleaning up any existing state
+prepare_disk() {
+    log_info "Preparing disk for partitioning..."
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would prepare $DISK"
+        return
+    fi
+
+    # Unmount any filesystems from /mnt (covers both root and boot)
+    if mountpoint -q /mnt/boot 2>/dev/null; then
+        log_info "Unmounting /mnt/boot..."
+        umount /mnt/boot 2>/dev/null || true
+    fi
+    if mountpoint -q /mnt 2>/dev/null; then
+        log_info "Unmounting /mnt..."
+        umount -R /mnt 2>/dev/null || true
+    fi
+
+    # Turn off any swap on this disk's partitions
+    for part in "${DISK}"* "${DISK}"p*; do
+        if [[ -b "$part" && "$part" != "$DISK" ]]; then
+            swapoff "$part" 2>/dev/null || true
+        fi
+    done
+
+    # Close any LUKS devices that might be using this disk
+    if cryptsetup status cryptroot &>/dev/null; then
+        log_info "Closing existing LUKS mapping..."
+        cryptsetup close cryptroot 2>/dev/null || true
+    fi
+
+    log_success "Disk prepared"
+}
+
 # Partition disk
 partition_disk() {
     log_info "Partitioning $DISK..."
@@ -346,23 +381,7 @@ setup_encryption() {
     # Store original partition for hardware config
     LUKS_DEVICE="$ROOT_PART"
 
-    # Close any existing LUKS mapping that might be using this device
-    if cryptsetup status cryptroot &>/dev/null; then
-        log_info "Closing existing LUKS mapping..."
-        # Unmount anything using the encrypted volume first
-        umount -R /mnt 2>/dev/null || true
-        swapoff /dev/mapper/cryptroot 2>/dev/null || true
-        cryptsetup close cryptroot || {
-            log_error "Could not close existing LUKS device. Please run: sudo umount -R /mnt && sudo cryptsetup close cryptroot"
-            exit 1
-        }
-    fi
-
-    # Wipe any existing LUKS signature
-    if blkid "$ROOT_PART" | grep -q crypto_LUKS; then
-        log_info "Wiping existing LUKS signature..."
-        wipefs -a "$ROOT_PART"
-    fi
+    # Note: LUKS device cleanup is handled by prepare_disk() before partitioning
 
     # Encrypt root
     echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type luks2 \
@@ -393,6 +412,8 @@ format_partitions() {
 
     # Format swap
     if [[ -n "${SWAP_PART:-}" ]]; then
+        # Turn off swap if it's active on this partition
+        swapoff "$SWAP_PART" 2>/dev/null || true
         mkswap -L swap "$SWAP_PART"
     fi
 
@@ -528,6 +549,7 @@ main() {
 
     echo ""
     echo -e "${CYAN}Step 3: Partitioning${RESET}"
+    prepare_disk
     partition_disk
     get_partitions
     setup_encryption
