@@ -36,7 +36,8 @@
     # ─────────────────────────────────────────────────────────────
     # Browsers
     # ─────────────────────────────────────────────────────────────
-    chromium
+    firefox          # Primary browser (best Wayland support)
+    chromium         # Alternative browser
 
     # ─────────────────────────────────────────────────────────────
     # Communication
@@ -62,6 +63,13 @@
     # TUI
     ncspot           # TUI Spotify client (default)
     spotify          # GUI Spotify (fallback)
+
+    # Media players
+    mpv              # Video player
+    loupe            # Image viewer (GNOME)
+
+    # Audio
+    pavucontrol      # PulseAudio volume control
     obs-studio       # Screen recording / streaming
 
     # ─────────────────────────────────────────────────────────────

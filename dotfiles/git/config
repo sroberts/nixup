@@ -1,0 +1,106 @@
+# Git Configuration
+# Copy to ~/.gitconfig or use: git config --global include.path /path/to/this/file
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = nvim
+    pager = delta
+    autocrlf = input
+    whitespace = fix
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    side-by-side = true
+    line-numbers = true
+    syntax-theme = TwoDark
+
+    # Tokyo Night-inspired colors
+    minus-style = syntax "#37222c"
+    minus-emph-style = syntax "#713137"
+    plus-style = syntax "#20303b"
+    plus-emph-style = syntax "#2c5a66"
+    map-styles = bold purple => syntax "#271344", bold cyan => syntax "#0d3531"
+
+    file-style = yellow bold
+    file-decoration-style = yellow box
+    hunk-header-style = line-number syntax bold
+    hunk-header-decoration-style = blue box
+
+[merge]
+    conflictstyle = diff3
+
+[diff]
+    colorMoved = default
+    algorithm = histogram
+
+[pull]
+    rebase = true
+
+[push]
+    default = current
+    autoSetupRemote = true
+
+[fetch]
+    prune = true
+
+[rebase]
+    autoStash = true
+
+[rerere]
+    enabled = true
+
+[alias]
+    # Short commands
+    s = status
+    a = add
+    aa = add --all
+    c = commit
+    cm = commit -m
+    co = checkout
+    cb = checkout -b
+    br = branch
+    d = diff
+    ds = diff --staged
+    p = push
+    pl = pull
+
+    # Logging
+    l = log --oneline -20
+    lg = log --oneline --graph --decorate --all
+    lp = log --patch
+
+    # Undo
+    unstage = reset HEAD --
+    undo = reset --soft HEAD~1
+    amend = commit --amend --no-edit
+
+    # Info
+    last = log -1 HEAD --stat
+    branches = branch -a
+    remotes = remote -v
+    tags = tag -l
+    stashes = stash list
+
+    # Cleanup
+    cleanup = "!git branch --merged | grep -v '\\*\\|main\\|master' | xargs -n 1 git branch -d"
+
+    # Interactive
+    ai = add --interactive
+    ap = add --patch
+
+[color]
+    ui = auto
+
+[credential]
+    helper = store
+
+[url "git@github.com:"]
+    insteadOf = gh:
+
+[url "git@gitlab.com:"]
+    insteadOf = gl:

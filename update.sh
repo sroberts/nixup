@@ -32,12 +32,15 @@ source "${SCRIPT_DIR}/lib/utils.sh"
 NIXOS_CONFIG_DIR="/etc/nixos"
 BACKUP_DIR="/etc/nixos/backups"
 CONFIG_DIR="${SCRIPT_DIR}/config"
+DOTFILES_DIR="${SCRIPT_DIR}/dotfiles"
 
 # Options
 REBUILD_ACTION="switch"
 DRY_RUN=false
 SKIP_BACKUP=false
 PULL_FIRST=false
+RESTORE_BACKUP=""
+COPY_DOTFILES=false
 
 # Print banner
 print_banner() {
@@ -62,18 +65,22 @@ Usage: $(basename "$0") [options]
 Sync your NixOS system with the nixup configuration.
 
 Options:
-    --help          Show this help message
-    --test          Build and activate but don't add to bootloader
-    --boot          Build and add to bootloader, activate on next boot
-    --dry-run       Show what would be done without making changes
-    --no-backup     Skip backing up existing configuration
-    --pull          Pull latest changes from git before updating
+    --help              Show this help message
+    --test              Build and activate but don't add to bootloader
+    --boot              Build and add to bootloader, activate on next boot
+    --dry-run           Show what would be done without making changes
+    --no-backup         Skip backing up existing configuration
+    --pull              Pull latest changes from git before updating
+    --restore [BACKUP]  Restore from a backup (list available if no arg)
+    --dotfiles          Also update user dotfiles (ghostty, git, yazi)
 
 Examples:
     $(basename "$0")              # Apply changes immediately (switch)
     $(basename "$0") --test       # Test changes without persisting
     $(basename "$0") --boot       # Apply on next reboot
     $(basename "$0") --pull       # Pull git changes first, then apply
+    $(basename "$0") --restore    # List available backups
+    $(basename "$0") --restore 20240101_120000  # Restore specific backup
 
 This script will:
   1. Optionally pull latest changes from git
@@ -112,6 +119,19 @@ parse_args() {
                 ;;
             --pull)
                 PULL_FIRST=true
+                shift
+                ;;
+            --restore)
+                shift
+                if [[ $# -gt 0 && ! "$1" =~ ^-- ]]; then
+                    RESTORE_BACKUP="$1"
+                    shift
+                else
+                    RESTORE_BACKUP="list"
+                fi
+                ;;
+            --dotfiles)
+                COPY_DOTFILES=true
                 shift
                 ;;
             *)
@@ -229,6 +249,80 @@ backup_config() {
     log_success "Backup complete"
 }
 
+# List available backups
+list_backups() {
+    log_info "Available backups:"
+    echo ""
+
+    if [[ ! -d "$BACKUP_DIR" ]]; then
+        log_warn "No backup directory found at $BACKUP_DIR"
+        return 1
+    fi
+
+    local backups
+    backups=$(ls -1d "${BACKUP_DIR}"/*/ 2>/dev/null | sort -r)
+
+    if [[ -z "$backups" ]]; then
+        log_warn "No backups found"
+        return 1
+    fi
+
+    local i=1
+    while IFS= read -r backup; do
+        local name
+        name=$(basename "$backup")
+        local date_part="${name:0:8}"
+        local time_part="${name:9:6}"
+        local formatted_date="${date_part:0:4}-${date_part:4:2}-${date_part:6:2}"
+        local formatted_time="${time_part:0:2}:${time_part:2:2}:${time_part:4:2}"
+        echo -e "  ${CYAN}${i})${RESET} ${name}  (${formatted_date} ${formatted_time})"
+        ((i++))
+    done <<< "$backups"
+
+    echo ""
+    echo -e "To restore, run: ${BOLD_WHITE}$(basename "$0") --restore <backup_name>${RESET}"
+}
+
+# Restore from a backup
+restore_backup() {
+    local backup_name="$1"
+
+    if [[ "$backup_name" == "list" ]]; then
+        list_backups
+        exit 0
+    fi
+
+    local backup_path="${BACKUP_DIR}/${backup_name}"
+
+    if [[ ! -d "$backup_path" ]]; then
+        log_error "Backup not found: $backup_path"
+        list_backups
+        exit 1
+    fi
+
+    log_info "Restoring from backup: $backup_name"
+
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY-RUN] Would restore from: ${backup_path}"
+        return 0
+    fi
+
+    # Restore configuration.nix
+    if [[ -f "${backup_path}/configuration.nix" ]]; then
+        cp "${backup_path}/configuration.nix" "${NIXOS_CONFIG_DIR}/configuration.nix"
+        log_success "Restored configuration.nix"
+    fi
+
+    # Restore modules directory
+    if [[ -d "${backup_path}/modules" ]]; then
+        rm -rf "${NIXOS_CONFIG_DIR}/modules"
+        cp -r "${backup_path}/modules" "${NIXOS_CONFIG_DIR}/modules"
+        log_success "Restored modules/"
+    fi
+
+    log_success "Backup restored from: $backup_name"
+}
+
 # Copy updated configuration files
 copy_configs() {
     log_info "Copying configuration files..."
@@ -238,6 +332,7 @@ copy_configs() {
     if [[ "$DRY_RUN" == true ]]; then
         log_info "[DRY-RUN] Would copy:"
         log_info "  ${CONFIG_DIR}/system/base.nix -> ${modules_dir}/base.nix"
+        log_info "  ${CONFIG_DIR}/system/shell.nix -> ${modules_dir}/shell.nix"
         log_info "  ${CONFIG_DIR}/system/applications.nix -> ${modules_dir}/applications.nix"
         log_info "  ${CONFIG_DIR}/niri/niri.nix -> ${modules_dir}/niri.nix"
         return 0
@@ -250,6 +345,12 @@ copy_configs() {
     if [[ -f "${CONFIG_DIR}/system/base.nix" ]]; then
         cp "${CONFIG_DIR}/system/base.nix" "${modules_dir}/base.nix"
         log_success "Copied base.nix"
+    fi
+
+    # Copy shell config
+    if [[ -f "${CONFIG_DIR}/system/shell.nix" ]]; then
+        cp "${CONFIG_DIR}/system/shell.nix" "${modules_dir}/shell.nix"
+        log_success "Copied shell.nix"
     fi
 
     # Copy applications config
@@ -290,25 +391,47 @@ copy_dotfiles() {
 
     if [[ "$DRY_RUN" == true ]]; then
         log_info "[DRY-RUN] Would update dotfiles for user: $username"
+        log_info "  Ghostty config -> ${config_dir}/ghostty/"
+        log_info "  Git config -> ${home_dir}/.gitconfig"
+        log_info "  Yazi config -> ${config_dir}/yazi/"
         return 0
     fi
 
-    # Update Niri config
-    if [[ -f "${CONFIG_DIR}/home/niri-config.nix" ]]; then
-        # Extract the niri config from the nix file
-        # For now, we'll update the config directly
-        mkdir -p "${config_dir}/niri"
-
-        # Check if user has customized their config
-        if [[ -f "${config_dir}/niri/config.kdl" ]]; then
-            local niri_backup="${config_dir}/niri/config.kdl.backup.$(date +%Y%m%d_%H%M%S)"
-            cp "${config_dir}/niri/config.kdl" "$niri_backup"
-            log_info "Backed up existing niri config to $niri_backup"
+    # Ghostty config
+    if [[ -d "${DOTFILES_DIR}/ghostty" ]]; then
+        mkdir -p "${config_dir}/ghostty"
+        if [[ -f "${config_dir}/ghostty/config" ]]; then
+            cp "${config_dir}/ghostty/config" "${config_dir}/ghostty/config.backup.$(date +%Y%m%d_%H%M%S)"
+            log_info "Backed up existing Ghostty config"
         fi
+        cp "${DOTFILES_DIR}/ghostty/config" "${config_dir}/ghostty/config"
+        log_success "Updated Ghostty config"
+    fi
+
+    # Git config
+    if [[ -d "${DOTFILES_DIR}/git" ]]; then
+        if [[ -f "${home_dir}/.gitconfig" ]]; then
+            cp "${home_dir}/.gitconfig" "${home_dir}/.gitconfig.backup.$(date +%Y%m%d_%H%M%S)"
+            log_info "Backed up existing Git config"
+        fi
+        cp "${DOTFILES_DIR}/git/config" "${home_dir}/.gitconfig"
+        log_success "Updated Git config"
+    fi
+
+    # Yazi config
+    if [[ -d "${DOTFILES_DIR}/yazi" ]]; then
+        mkdir -p "${config_dir}/yazi"
+        if [[ -f "${config_dir}/yazi/yazi.toml" ]]; then
+            cp "${config_dir}/yazi/yazi.toml" "${config_dir}/yazi/yazi.toml.backup.$(date +%Y%m%d_%H%M%S)"
+            log_info "Backed up existing Yazi config"
+        fi
+        cp "${DOTFILES_DIR}/yazi/"*.toml "${config_dir}/yazi/" 2>/dev/null || true
+        log_success "Updated Yazi config"
     fi
 
     # Fix ownership
     chown -R "${username}:${username}" "$config_dir"
+    chown "${username}:${username}" "${home_dir}/.gitconfig" 2>/dev/null || true
 
     log_success "Dotfiles updated for user: $username"
 }
@@ -376,6 +499,17 @@ main() {
     # Parse arguments
     parse_args "$@"
 
+    # Handle restore mode
+    if [[ -n "$RESTORE_BACKUP" ]]; then
+        check_environment
+        restore_backup "$RESTORE_BACKUP"
+        rebuild_system
+        if [[ "$DRY_RUN" != true ]]; then
+            show_summary
+        fi
+        exit 0
+    fi
+
     # Check environment
     check_environment
 
@@ -388,8 +522,10 @@ main() {
     # Copy new configs
     copy_configs
 
-    # Optionally copy dotfiles
-    # copy_dotfiles  # Disabled by default - user dotfiles are personal
+    # Update user dotfiles if requested
+    if [[ "$COPY_DOTFILES" == true ]]; then
+        copy_dotfiles
+    fi
 
     # Rebuild system
     rebuild_system

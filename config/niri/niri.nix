@@ -44,7 +44,7 @@
     XDG_CURRENT_DESKTOP = "niri";
   };
 
-  # Programs commonly used with Niri (terminals in applications.nix)
+  # Programs commonly used with Niri (apps in applications.nix)
   environment.systemPackages = with pkgs; [
     # Application launcher
     fuzzel
@@ -71,23 +71,13 @@
 
     # Wallpaper
     swaybg
-    hyprpaper
 
     # Display management
     wlr-randr
     kanshi
 
-    # File manager
-    pcmanfm
-    gnome.nautilus
-
-    # Image viewer
+    # Image viewer (lightweight for Wayland)
     imv
-    loupe
-
-    # Media
-    mpv
-    pavucontrol
 
     # Brightness and audio control
     brightnessctl
@@ -100,7 +90,6 @@
     # Wayland utilities
     wev
     wtype
-    xdg-utils
 
     # Theming
     qt5.qtwayland

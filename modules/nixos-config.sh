@@ -54,6 +54,7 @@ generate_configuration_nix() {
   imports = [
     ./hardware-configuration.nix
     ./modules/base.nix
+    ./modules/shell.nix
     ./modules/applications.nix
     ./modules/niri.nix
     ./modules/hardware-custom.nix
@@ -107,6 +108,9 @@ copy_module_configs() {
 
     # Copy base system config
     cp "${CONFIG_DIR}/system/base.nix" "${target_dir}/base.nix"
+
+    # Copy shell config
+    cp "${CONFIG_DIR}/system/shell.nix" "${target_dir}/shell.nix"
 
     # Copy applications config
     cp "${CONFIG_DIR}/system/applications.nix" "${target_dir}/applications.nix"
@@ -472,6 +476,26 @@ EOF
 
     # Create Pictures/Screenshots directory
     ensure_dir "${home_dir}/Pictures/Screenshots"
+
+    # Copy dotfiles from nixup/dotfiles/
+    local dotfiles_dir="${SCRIPT_DIR}/../dotfiles"
+
+    # Ghostty config
+    if [[ -d "${dotfiles_dir}/ghostty" ]]; then
+        ensure_dir "${config_dir}/ghostty"
+        cp "${dotfiles_dir}/ghostty/config" "${config_dir}/ghostty/config" 2>/dev/null || true
+    fi
+
+    # Git config
+    if [[ -d "${dotfiles_dir}/git" ]]; then
+        cp "${dotfiles_dir}/git/config" "${home_dir}/.gitconfig" 2>/dev/null || true
+    fi
+
+    # Yazi config
+    if [[ -d "${dotfiles_dir}/yazi" ]]; then
+        ensure_dir "${config_dir}/yazi"
+        cp "${dotfiles_dir}/yazi/"*.toml "${config_dir}/yazi/" 2>/dev/null || true
+    fi
 
     # Set ownership
     # Note: This will be done properly after nixos-install sets up the user
