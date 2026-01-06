@@ -122,47 +122,26 @@ EOF
     esac
 }
 
-# Generate laptop-specific configuration
+# Generate laptop/Framework configuration (optimized for Framework 13)
 generate_laptop_config() {
-    if [[ "$IS_LAPTOP" != true ]]; then
+    # Default to laptop mode for Framework 13
+    if [[ "${IS_LAPTOP:-true}" != true ]]; then
         return 0
     fi
 
     cat << 'EOF'
-  # Laptop power management
-  services.thermald.enable = true;
-  services.power-profiles-daemon.enable = true;
-
-  # Better battery life
-  powerManagement.enable = true;
-  powerManagement.cpuFreqGovernor = "powersave";
-
-  # Lid switch behavior
-  services.logind = {
-    lidSwitch = "suspend";
-    lidSwitchExternalPower = "ignore";
-    lidSwitchDocked = "ignore";
-  };
-EOF
-}
-
-# Generate Framework-specific configuration
-generate_framework_config() {
-    if [[ "$IS_FRAMEWORK" != true ]]; then
-        return 0
-    fi
-
-    cat << 'EOF'
-  # Framework laptop specific
+  # Framework laptop configuration
   hardware.framework.enableKmod = true;
 
-  # Framework firmware updates
+  # Firmware updates
   services.fwupd.enable = true;
 
   # Ambient light sensor
   hardware.sensor.iio.enable = true;
 
-  # Better power management for Framework
+  # Power management with TLP
+  services.thermald.enable = true;
+  powerManagement.enable = true;
   services.tlp = {
     enable = true;
     settings = {
@@ -174,8 +153,14 @@ generate_framework_config() {
       PLATFORM_PROFILE_ON_BAT = "low-power";
     };
   };
-  # Disable power-profiles-daemon when using TLP
   services.power-profiles-daemon.enable = false;
+
+  # Lid switch behavior
+  services.logind = {
+    lidSwitch = "suspend";
+    lidSwitchExternalPower = "ignore";
+    lidSwitchDocked = "ignore";
+  };
 EOF
 }
 
@@ -233,8 +218,6 @@ EOF
     echo ""
     generate_laptop_config
     echo ""
-    generate_framework_config
-    echo ""
     generate_fingerprint_config
     echo ""
     generate_bluetooth_config
@@ -255,5 +238,5 @@ setup_hardware() {
 }
 
 export -f detect_system generate_cpu_config generate_gpu_config generate_laptop_config
-export -f generate_framework_config generate_fingerprint_config generate_bluetooth_config
+export -f generate_fingerprint_config generate_bluetooth_config
 export -f generate_hardware_config setup_hardware

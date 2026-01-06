@@ -185,36 +185,21 @@ EOF
             ;;
     esac
 
-    # Laptop configuration
-    if [[ "${IS_LAPTOP:-false}" == "true" ]]; then
+    # Laptop/Framework configuration (optimized for Framework 13)
+    if [[ "${IS_LAPTOP:-true}" == "true" ]]; then
         cat >> "$output_file" << 'EOF'
-  # Laptop power management
-  services.thermald.enable = true;
-  powerManagement.enable = true;
-
-  # Lid switch behavior
-  services.logind = {
-    lidSwitch = "suspend";
-    lidSwitchExternalPower = "ignore";
-    lidSwitchDocked = "ignore";
-  };
-
-EOF
-    fi
-
-    # Framework-specific configuration
-    if [[ "${IS_FRAMEWORK:-false}" == "true" ]]; then
-        cat >> "$output_file" << 'EOF'
-  # Framework laptop specific
+  # Framework laptop configuration
   hardware.framework.enableKmod = true;
 
-  # Framework firmware updates
+  # Firmware updates
   services.fwupd.enable = true;
 
   # Ambient light sensor
   hardware.sensor.iio.enable = true;
 
-  # TLP for better power management
+  # Power management with TLP
+  services.thermald.enable = true;
+  powerManagement.enable = true;
   services.tlp = {
     enable = true;
     settings = {
@@ -227,6 +212,13 @@ EOF
     };
   };
   services.power-profiles-daemon.enable = false;
+
+  # Lid switch behavior
+  services.logind = {
+    lidSwitch = "suspend";
+    lidSwitchExternalPower = "ignore";
+    lidSwitchDocked = "ignore";
+  };
 
 EOF
     fi
