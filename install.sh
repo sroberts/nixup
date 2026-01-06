@@ -393,6 +393,8 @@ format_partitions() {
 
     # Format swap
     if [[ -n "${SWAP_PART:-}" ]]; then
+        # Turn off swap if it's active on this partition
+        swapoff "$SWAP_PART" 2>/dev/null || true
         mkswap -L swap "$SWAP_PART"
     fi
 
