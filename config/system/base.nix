@@ -94,20 +94,27 @@
   fonts = {
     enableDefaultPackages = true;
     packages = with pkgs; [
+      # Base fonts
       noto-fonts
       noto-fonts-cjk-sans
       noto-fonts-emoji
       liberation_ttf
+
+      # Coding fonts
+      jetbrains-mono
       fira-code
       fira-code-symbols
-      jetbrains-mono
-      (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" ]; })
+
+      # Nerd Fonts (icons and symbols)
+      (nerdfonts.override { fonts = [ "JetBrainsMono" "FiraCode" "NerdFontsSymbolsOnly" ]; })
     ];
     fontconfig = {
+      enable = true;
       defaultFonts = {
         serif = [ "Noto Serif" ];
         sansSerif = [ "Noto Sans" ];
-        monospace = [ "JetBrainsMono Nerd Font" ];
+        monospace = [ "JetBrainsMono Nerd Font" "Symbols Nerd Font" ];
+        emoji = [ "Noto Color Emoji" ];
       };
     };
   };
