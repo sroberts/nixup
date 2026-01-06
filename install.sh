@@ -346,6 +346,24 @@ setup_encryption() {
     # Store original partition for hardware config
     LUKS_DEVICE="$ROOT_PART"
 
+    # Close any existing LUKS mapping that might be using this device
+    if cryptsetup status cryptroot &>/dev/null; then
+        log_info "Closing existing LUKS mapping..."
+        # Unmount anything using the encrypted volume first
+        umount -R /mnt 2>/dev/null || true
+        swapoff /dev/mapper/cryptroot 2>/dev/null || true
+        cryptsetup close cryptroot || {
+            log_error "Could not close existing LUKS device. Please run: sudo umount -R /mnt && sudo cryptsetup close cryptroot"
+            exit 1
+        }
+    fi
+
+    # Wipe any existing LUKS signature
+    if blkid "$ROOT_PART" | grep -q crypto_LUKS; then
+        log_info "Wiping existing LUKS signature..."
+        wipefs -a "$ROOT_PART"
+    fi
+
     # Encrypt root
     echo -n "$LUKS_PASSWORD" | cryptsetup luksFormat --type luks2 \
         --cipher aes-xts-plain64 \
