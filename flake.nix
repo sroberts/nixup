@@ -13,12 +13,13 @@
 
     # Override xwayland-satellite inputs to work around Nix narHash assertion bug
     # https://github.com/NixOS/nix/issues/9303
+    # Pin to exact commits that niri-flake uses, but without narHash in URL
     xwayland-satellite-stable = {
-      url = "github:Supreeeme/xwayland-satellite/v0.7";
+      url = "github:Supreeeme/xwayland-satellite/388d291e82ffbc73be18169d39470f340707edaa";
       flake = false;
     };
     xwayland-satellite-unstable = {
-      url = "github:Supreeeme/xwayland-satellite";
+      url = "github:Supreeeme/xwayland-satellite/0dde7ca1d3a8e8c5082533d76084e2aa02bef70e";
       flake = false;
     };
     niri.inputs.xwayland-satellite-stable.follows = "xwayland-satellite-stable";
