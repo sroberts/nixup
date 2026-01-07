@@ -2,10 +2,12 @@
   description = "NixOS configuration for Framework 13 with Niri";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    # Use git+https to avoid GitHub tarball regeneration issues (NixOS/nix#9303)
+    # The github: scheme fetches tarballs which can be regenerated with different hashes
+    nixpkgs.url = "git+https://github.com/NixOS/nixpkgs?ref=nixos-24.11";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-24.11";
+      url = "git+https://github.com/nix-community/home-manager?ref=release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
