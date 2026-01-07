@@ -10,21 +10,10 @@
     };
 
     niri.url = "github:sodiboo/niri-flake";
-
-    # Override xwayland-satellite inputs to work around Nix narHash assertion bug
-    # https://github.com/NixOS/nix/issues/9303
-    # Use tarball URLs instead of github: URLs to avoid narHash mismatch issues
-    # when the follows directive pulls in locked hashes from niri-flake
-    xwayland-satellite-stable = {
-      url = "tarball+https://github.com/Supreeeme/xwayland-satellite/archive/388d291e82ffbc73be18169d39470f340707edaa.tar.gz";
-      flake = false;
-    };
-    xwayland-satellite-unstable = {
-      url = "tarball+https://github.com/Supreeeme/xwayland-satellite/archive/0dde7ca1d3a8e8c5082533d76084e2aa02bef70e.tar.gz";
-      flake = false;
-    };
-    niri.inputs.xwayland-satellite-stable.follows = "xwayland-satellite-stable";
-    niri.inputs.xwayland-satellite-unstable.follows = "xwayland-satellite-unstable";
+    # Note: We intentionally do NOT override xwayland-satellite inputs.
+    # Using `follows` to override these inputs causes narHash assertion failures
+    # due to GitHub tarball regeneration (NixOS/nix#9303). Let niri-flake use
+    # its own properly locked inputs instead.
   };
 
   outputs = { self, nixpkgs, home-manager, niri, ... }@inputs:
