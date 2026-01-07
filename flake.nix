@@ -10,6 +10,19 @@
     };
 
     niri.url = "github:sodiboo/niri-flake";
+
+    # Override xwayland-satellite inputs to work around Nix narHash assertion bug
+    # https://github.com/NixOS/nix/issues/9303
+    xwayland-satellite-stable = {
+      url = "github:Supreeeme/xwayland-satellite/v0.7";
+      flake = false;
+    };
+    xwayland-satellite-unstable = {
+      url = "github:Supreeeme/xwayland-satellite";
+      flake = false;
+    };
+    niri.inputs.xwayland-satellite-stable.follows = "xwayland-satellite-stable";
+    niri.inputs.xwayland-satellite-unstable.follows = "xwayland-satellite-unstable";
   };
 
   outputs = { self, nixpkgs, home-manager, niri, ... }@inputs:
