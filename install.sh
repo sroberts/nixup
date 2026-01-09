@@ -46,6 +46,31 @@ log_success() { echo -e "${GREEN}[OK]${RESET} $1"; }
 log_warn() { echo -e "${YELLOW}[WARN]${RESET} $1"; }
 log_error() { echo -e "${RED}[ERROR]${RESET} $1"; }
 
+# Spinner for long-running operations
+SPINNER_PID=""
+
+start_spinner() {
+    local message="${1:-Working...}"
+    (
+        local spin_chars='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+        local i=0
+        while true; do
+            printf "\r${CYAN}[%s]${RESET} %s" "${spin_chars:i++%${#spin_chars}:1}" "$message"
+            sleep 0.1
+        done
+    ) &
+    SPINNER_PID=$!
+}
+
+stop_spinner() {
+    if [[ -n "${SPINNER_PID:-}" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+        kill "$SPINNER_PID" 2>/dev/null
+        wait "$SPINNER_PID" 2>/dev/null || true
+        printf "\r\033[K"  # Clear the spinner line
+    fi
+    SPINNER_PID=""
+}
+
 # Print banner
 print_banner() {
     echo -e "${CYAN}"
@@ -483,6 +508,8 @@ EOF
 # Run nixos-install
 run_install() {
     log_info "Installing NixOS..."
+    log_info "This may take 10-30 minutes depending on your internet connection"
+    echo ""
 
     if [[ "$DRY_RUN" == true ]]; then
         log_info "[DRY-RUN] Would run: nixos-install --flake ${SCRIPT_DIR}#framework --no-root-passwd"
@@ -493,10 +520,21 @@ run_install() {
     mkdir -p /mnt/etc/nixos
     cp -r "${SCRIPT_DIR}"/* /mnt/etc/nixos/
 
-    # Install
-    nixos-install --flake "/mnt/etc/nixos#framework" --no-root-passwd
+    # Install with progress indication
+    start_spinner "Installing NixOS (downloading and building packages)..."
 
-    log_success "NixOS installed!"
+    # Run installation, capturing output to a log file while showing spinner
+    local install_log="/tmp/nixos-install.log"
+    if nixos-install --flake "/mnt/etc/nixos#framework" --no-root-passwd > "$install_log" 2>&1; then
+        stop_spinner
+        log_success "NixOS installed!"
+    else
+        stop_spinner
+        log_error "Installation failed! Check log below:"
+        echo ""
+        tail -50 "$install_log"
+        exit 1
+    fi
 }
 
 # Show completion message
