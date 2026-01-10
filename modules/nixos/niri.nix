@@ -19,14 +19,10 @@
     };
   };
 
-  # Screen locker
-  programs.swaylock = {
-    enable = true;
-    package = pkgs.swaylock-effects;
-  };
-
   # Enable required services for Wayland desktop
   services.gnome.gnome-keyring.enable = true;
+
+  # Screen locker PAM service
   security.pam.services.swaylock = { };
 
   # Environment variables for Wayland
@@ -58,6 +54,9 @@
     # Clipboard
     wl-clipboard
     cliphist
+
+    # Screen locker
+    swaylock-effects
 
     # Screen sharing
     xdg-desktop-portal-gtk

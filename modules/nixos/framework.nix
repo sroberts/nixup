@@ -1,25 +1,19 @@
 # Framework 13 laptop hardware configuration
+# Note: nixos-hardware provides base Framework configuration
+# This file contains additional customizations
 { config, pkgs, lib, ... }:
 
 {
-  # Framework laptop kernel module
-  hardware.framework.enableKmod = true;
-
   # Firmware updates
   services.fwupd.enable = true;
 
   # Ambient light sensor
   hardware.sensor.iio.enable = true;
 
-  # Intel graphics
+  # AMD graphics (Framework 13 AMD Ryzen 7040)
+  # Note: Intel graphics config removed as this is for AMD model
   hardware.graphics = {
     enable = true;
-    extraPackages = with pkgs; [
-      intel-media-driver
-      vaapiIntel
-      vaapiVdpau
-      libvdpau-va-gl
-    ];
   };
 
   # Power management with TLP

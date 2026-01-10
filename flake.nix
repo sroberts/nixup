@@ -11,6 +11,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     niri.url = "github:sodiboo/niri-flake";
     # Note: We intentionally do NOT override xwayland-satellite inputs.
     # Using `follows` to override these inputs causes narHash assertion failures
@@ -18,7 +20,7 @@
     # its own properly locked inputs instead.
   };
 
-  outputs = { self, nixpkgs, home-manager, niri, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, nixos-hardware, niri, ... }@inputs:
   let
     # Load local configuration
     local = import ./hosts/framework/local.nix;
@@ -32,6 +34,9 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs local; };
         modules = [
+          # Framework laptop hardware support
+          nixos-hardware.nixosModules.framework-13-7040-amd
+
           # Niri flake module
           niri.nixosModules.niri
 

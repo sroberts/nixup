@@ -33,7 +33,6 @@
     # Development Tools
     # ─────────────────────────────────────────────────────────────
     git
-    git-credential-libsecret
     gh
     lazygit
     tig
