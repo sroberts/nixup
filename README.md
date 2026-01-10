@@ -170,25 +170,25 @@ Modern CLI tool replacements are configured by default:
 
 ## Development & Testing
 
-### Running CI/CD Tests Locally
+### Running Tests Locally
 
-This project includes automated tests that validate the Nix configuration. These tests run automatically on every push via GitHub Actions, but you can also run them locally.
+This project includes comprehensive validation tests for the Nix configuration.
 
 #### Prerequisites
 
 - **For local tests**: Nix with flakes enabled
-- **For Docker tests**: Docker installed
+- **For Docker tests**: Docker installed (recommended for isolated testing)
 
 #### Quick Start
 
 ```bash
-# Run all tests locally (requires Nix)
-make test
-
-# Run tests in Docker container (recommended)
+# Run comprehensive tests in Docker container (recommended)
 make test-docker
 
-# Just check the flake
+# Run tests locally (requires Nix)
+make test
+
+# Just check the flake (fast)
 make check
 
 # Show available commands
@@ -197,7 +197,7 @@ make help
 
 #### Test Suite
 
-The test suite validates:
+The comprehensive test suite validates:
 - Flake structure and metadata
 - Configuration evaluation
 - System build (without installation)
@@ -205,13 +205,15 @@ The test suite validates:
 - Deprecated options check
 - Flake input locks
 
+**Note**: The full system build requires significant disk space (20GB+) and is best run locally via Docker.
+
 #### Manual Testing
 
 ```bash
-# Check flake
+# Check flake (lightweight)
 nix flake check --show-trace
 
-# Build system configuration
+# Build system configuration (requires significant disk space)
 nix build .#nixosConfigurations.framework.config.system.build.toplevel
 
 # Show flake structure
@@ -220,14 +222,16 @@ nix flake show
 
 ### Continuous Integration
 
-GitHub Actions automatically runs tests on:
+GitHub Actions automatically validates the configuration on:
 - All pushes to `main` and `back-to-niri` branches
 - All pull requests to `main`
 
-The CI pipeline includes:
-1. Flake validation and checks
-2. NixOS configuration build
-3. Docker container tests
+The CI pipeline runs lightweight validation:
+- Flake syntax and evaluation checks
+- Module structure validation
+- Configuration consistency checks
+
+For comprehensive testing including full system builds, use `make test-docker` locally.
 
 ## Customization
 

@@ -1,3 +1,15 @@
+# CI/CD Pipeline for NixOS Configuration
+#
+# This workflow runs lightweight validation checks on GitHub Actions.
+# For comprehensive testing including full system builds, use local Docker tests:
+#   make test-docker
+#
+# The flake check validates:
+# - Nix syntax and evaluation
+# - Module structure and imports
+# - Configuration consistency
+# - Home Manager integration
+
 name: CI
 
 on:
@@ -25,51 +37,3 @@ jobs:
 
       - name: Show flake metadata
         run: nix flake metadata
-
-  nix-build:
-    name: Build NixOS Configuration
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v9
-
-      - name: Setup Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v3
-
-      - name: Build framework configuration
-        run: |
-          # Create a dummy local.nix for CI builds
-          mkdir -p hosts/framework
-          cat > hosts/framework/local.nix << 'EOF'
-          {
-            username = "testuser";
-            fullName = "Test User";
-            hostname = "test-framework";
-            gitUsername = "testuser";
-            gitEmail = "test@example.com";
-            # Dummy password hash (password: test)
-            hashedPassword = "$6$rounds=65536$saltsaltsalt$IvaHiRkzSKkbj.FBR6bPwHUb9RRcT6bXB6HWF3RH.lJmxlLX0eLELXLEBJXALMKGOKXOVXMLAMBCDBEFGH";
-          }
-          EOF
-
-      - name: Build NixOS system
-        run: nix build .#nixosConfigurations.framework.config.system.build.toplevel --show-trace
-
-      - name: Evaluate configuration
-        run: nix eval .#nixosConfigurations.framework.config.system.nixos.version --raw
-
-  docker-test:
-    name: Docker Container Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Build test Docker image
-        run: docker build -t nixup-test -f Dockerfile.test .
-
-      - name: Run tests in container
-        run: docker run --rm nixup-test
