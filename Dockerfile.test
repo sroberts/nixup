@@ -1,0 +1,30 @@
+FROM nixos/nix:latest
+
+# Enable flakes and nix command
+RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy repository files
+COPY . .
+
+# Create dummy local.nix for testing and add it to git
+RUN mkdir -p hosts/framework && \
+    cat > hosts/framework/local.nix << 'EOF'
+{
+  username = "testuser";
+  fullName = "Test User";
+  hostname = "test-framework";
+  gitUsername = "testuser";
+  gitEmail = "test@example.com";
+  # Dummy password hash (password: test)
+  hashedPassword = "$6$rounds=65536$saltsaltsalt$IvaHiRkzSKkbj.FBR6bPwHUb9RRcT6bXB6HWF3RH.lJmxlLX0eLELXLEBJXALMKGOKXOVXMLAMBCDBEFGH";
+}
+EOF
+
+# Add local.nix to git so the flake can see it
+RUN git add hosts/framework/local.nix
+
+# Run test script
+CMD ["./test.sh"]
