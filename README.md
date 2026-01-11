@@ -9,7 +9,7 @@ A declarative NixOS flake configuration for Framework 13 laptops with the Niri W
 - **Framework 13 Support**: TLP power management, firmware updates, ambient light sensor
 - **Niri Wayland Compositor**: Modern, scrollable tiling compositor with sensible defaults
 - **LUKS Encryption**: Optional full-disk encryption
-- **Tokyo Night Theme**: Consistent theming across terminal, editor, and desktop
+- **Nord Theme**: Consistent theming across terminal, editor, and desktop
 
 ## Project Structure
 
@@ -118,19 +118,21 @@ sudo nix-collect-garbage --delete-older-than 7d
 | Key | Action |
 |-----|--------|
 | `Super + Return` | Open terminal (Ghostty) |
-| `Super + Space` | Application launcher (Fuzzel) |
+| `Super + D` | Application launcher (Fuzzel) |
 | `Super + E` | File manager (Yazi in terminal) |
 | `Super + Q` | Close window |
-| `Super + L` | Lock screen |
-| `Super + Escape` | Power menu |
+| `Super + Shift + E` | Lock screen (swaylock) |
+| `Super + Shift + Q` | Quit Niri |
 | `Super + 1-9` | Switch to workspace |
 | `Super + Shift + 1-9` | Move window to workspace |
 | `Super + H/J/K/L` | Focus left/down/up/right |
 | `Super + Shift + H/J/K/L` | Move window left/down/up/right |
-| `Super + F` | Maximize column |
-| `Super + Shift + F` | Fullscreen window |
-| `Super + R` | Cycle column width presets |
-| `Print` | Screenshot |
+| `Super + Minus/Equal` | Adjust column width |
+| `Super + Shift + Minus/Equal` | Adjust window height |
+| `Super + Comma` | Consume window into column |
+| `Super + Period` | Expel window from column |
+| `Print` | Screenshot (region select) |
+| `Super + Print` | Screenshot (full screen) |
 
 ## Applications
 
@@ -288,6 +290,7 @@ MIT
 
 ## Credits
 
-- [Niri](https://github.com/YaLTeR/niri) - Wayland compositor
-- [Home Manager](https://github.com/nix-community/home-manager) - User configuration
-- [Tokyo Night](https://github.com/enkia/tokyo-night-vscode-theme) - Color scheme inspiration
+- [Niri](https://github.com/YaLTeR/niri) - Scrollable-tiling Wayland compositor
+- [Home Manager](https://github.com/nix-community/home-manager) - Declarative dotfile management
+- [Nord](https://www.nordtheme.com/) - Arctic color palette
+- [nixos-hardware](https://github.com/NixOS/nixos-hardware) - Framework laptop optimizations
