@@ -16,8 +16,7 @@
         margin-right = 8;
 
         modules-left = [
-          "hyprland/workspaces"
-          "hyprland/window"
+          "clock#date"
         ];
 
         modules-center = [
@@ -34,31 +33,9 @@
           "power-profiles-daemon"
         ];
 
-        "hyprland/workspaces" = {
-          format = "{icon}";
-          format-icons = {
-            "1" = "1";
-            "2" = "2";
-            "3" = "3";
-            "4" = "4";
-            "5" = "5";
-            "6" = "6";
-            "7" = "7";
-            "8" = "8";
-            "9" = "9";
-            "10" = "0";
-            urgent = "";
-            active = "";
-            default = "";
-          };
-          on-click = "activate";
-          sort-by-number = true;
-        };
-
-        "hyprland/window" = {
-          format = "{}";
-          max-length = 50;
-          separate-outputs = true;
+        "clock#date" = {
+          format = "{:%A, %B %d}";
+          tooltip-format = "<tt><small>{calendar}</small></tt>";
         };
 
         clock = {

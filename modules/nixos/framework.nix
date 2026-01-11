@@ -16,31 +16,7 @@
     enable = true;
   };
 
-  # Power management with TLP
-  services.thermald.enable = true;
-  powerManagement.enable = true;
-
-  services.tlp = {
-    enable = true;
-    settings = {
-      CPU_SCALING_GOVERNOR_ON_AC = "performance";
-      CPU_SCALING_GOVERNOR_ON_BAT = "powersave";
-      CPU_ENERGY_PERF_POLICY_ON_AC = "performance";
-      CPU_ENERGY_PERF_POLICY_ON_BAT = "power";
-      PLATFORM_PROFILE_ON_AC = "performance";
-      PLATFORM_PROFILE_ON_BAT = "low-power";
-    };
-  };
-
-  # Disable conflicting power management
-  services.power-profiles-daemon.enable = false;
-
-  # Lid switch behavior
-  services.logind = {
-    lidSwitch = "suspend";
-    lidSwitchExternalPower = "ignore";
-    lidSwitchDocked = "ignore";
-  };
+  # Power management is configured in modules/hardware/power.nix
 
   # Bluetooth
   hardware.bluetooth = {
