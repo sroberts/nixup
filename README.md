@@ -47,26 +47,29 @@ nixup/
 
 ## Installation
 
-### Fresh Install
+**Choose your installation method:**
 
-1. Boot from the NixOS installation ISO
-2. Clone this repository:
-   ```bash
-   nix-shell -p git
-   git clone https://github.com/sroberts/nixup.git
-   cd nixup
-   ```
-3. Run the installer:
-   ```bash
-   sudo ./install.sh
-   ```
-4. Follow the prompts:
-   - Disk selection and swap size
-   - LUKS encryption password (optional)
-   - Username, full name, and password
-   - System hostname
-   - Git identity (optional)
-5. Reboot into your new system
+### Option 1: Automated Installation (Recommended)
+
+The automated installer handles everything for you:
+
+```bash
+# Boot from NixOS ISO and connect to internet
+nix-shell -p git
+git clone https://github.com/sroberts/nixup.git
+cd nixup
+sudo ./install.sh
+```
+
+Follow the interactive prompts for disk selection, LUKS encryption, and user setup. See [INSTALL.md](INSTALL.md) for detailed instructions.
+
+### Option 2: Manual Installation
+
+For advanced users who want complete control, see the comprehensive [Manual Installation Guide](INSTALL.md#method-2-manual-installation) with step-by-step instructions for:
+- Custom partitioning
+- LUKS encryption setup
+- Manual configuration
+- Troubleshooting
 
 ### Post-Installation
 
