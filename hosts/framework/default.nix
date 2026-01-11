@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, inputs, local, ... }:
 
 {
   imports = [
@@ -6,7 +6,10 @@
     ../../modules/hardware/framework-amd.nix
     ../../modules/hardware/fingerprint.nix
     ../../modules/hardware/power.nix
-    ../../modules/desktop/greetd.nix
+    # greetd is configured in modules/nixos/niri.nix
+    ../../modules/nixos/applications.nix
+    ../../modules/nixos/framework.nix
+    ../../modules/nixos/niri.nix
   ];
 
   # Bootloader
@@ -19,7 +22,7 @@
   boot.kernelParams = [ "resume=/dev/disk/by-label/swap" ];
 
   # Networking
-  networking.hostName = "framework";
+  networking.hostName = local.hostname;
   networking.networkmanager.enable = true;
 
   # Time zone - adjust as needed
@@ -45,28 +48,16 @@
   nixpkgs.config.allowUnfree = true;
 
   # User account
-  users.users.scott = {
+  users.users.${local.username} = {
     isNormalUser = true;
-    description = "Scott";
+    description = local.fullName;
+    hashedPassword = local.hashedPassword;
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     shell = pkgs.zsh;
   };
 
   # Enable zsh system-wide
   programs.zsh.enable = true;
-
-  # Hyprland
-  programs.hyprland = {
-    enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
-    xwayland.enable = true;
-  };
-
-  # XDG portal for Wayland
-  xdg.portal = {
-    enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
-  };
 
   # Audio
   security.rtkit.enable = true;
@@ -85,46 +76,10 @@
   };
   virtualisation.containers.enable = true;
 
-  # Bluetooth
-  hardware.bluetooth.enable = true;
-  hardware.bluetooth.powerOnBoot = true;
-  services.blueman.enable = true;
+  # Bluetooth is configured in modules/nixos/framework.nix
 
-  # System packages
+  # Additional system packages (most packages are in modules/nixos/applications.nix)
   environment.systemPackages = with pkgs; [
-    # Core utilities
-    git
-    curl
-    wget
-    unzip
-    ripgrep
-    fd
-    bat
-    eza
-    fzf
-    jq
-    htop
-    btop
-
-    # Wayland essentials
-    wl-clipboard
-    cliphist
-    grim
-    slurp
-    swappy
-    wlr-randr
-    brightnessctl
-    playerctl
-    pamixer
-
-    # File management
-    nautilus
-    file-roller
-
-    # Networking
-    networkmanagerapplet
-
-    # System
     polkit_gnome
   ];
 

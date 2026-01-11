@@ -1,0 +1,12 @@
+# Machine-specific configuration template
+# Copy this file to local.nix and customize with your details
+# This file is automatically created by install.sh during installation
+{
+  username = "yourname";
+  fullName = "Your Full Name";
+  hostname = "framework";
+  gitUsername = "yourgithubname";
+  gitEmail = "your.email@example.com";
+  # Generate password hash with: mkpasswd -m sha-512
+  hashedPassword = "REPLACE_WITH_PASSWORD_HASH";
+}

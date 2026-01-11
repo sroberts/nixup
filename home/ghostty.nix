@@ -1,9 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, ... }:
 
 {
-  # Install Ghostty from flake input
+  # Install Ghostty from nixpkgs
   home.packages = [
-    inputs.ghostty.packages.${pkgs.system}.default
+    pkgs.ghostty
   ];
 
   # Ghostty configuration

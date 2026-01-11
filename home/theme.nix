@@ -60,6 +60,26 @@
     x11.enable = true;
   };
 
+  # GTK theming
+  gtk = {
+    enable = true;
+    theme = {
+      name = "Nordic";
+      package = pkgs.nordic;
+    };
+    iconTheme = {
+      name = "Nordzy";
+      package = pkgs.nordzy-icon-theme;
+    };
+  };
+
+  # Qt theming
+  qt = {
+    enable = true;
+    platformTheme.name = "gtk";
+    style.name = "gtk2";
+  };
+
   # Wallpaper - create a simple solid color background
   # You can replace this with an actual wallpaper
   home.file.".local/share/backgrounds/nord-gradient.svg".text = ''
@@ -75,6 +95,6 @@
     </svg>
   '';
 
-  # You can add hyprpaper or swww for wallpaper management
-  # For now, Hyprland will use a solid color
+  # You can use swaybg for wallpaper management (included in system packages)
+  # For now, using a generated gradient background
 }

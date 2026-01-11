@@ -1,12 +1,11 @@
-{ config, pkgs, ... }:
+{ config, pkgs, local, ... }:
 
 {
   programs.git = {
     enable = true;
-    
-    # Update with your details
-    userName = "Scott";
-    userEmail = "your.email@example.com";  # TODO: Update this
+
+    userName = local.gitUsername;
+    userEmail = local.gitEmail;
 
     extraConfig = {
       init.defaultBranch = "main";
@@ -15,10 +14,7 @@
       core.editor = "nvim";
       merge.conflictstyle = "diff3";
       diff.colorMoved = "default";
-      
-      # Better diffs
-      core.pager = "bat --style=changes";
-      
+
       # Credential helper - uses system keyring
       credential.helper = "libsecret";
     };

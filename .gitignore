@@ -1,0 +1,10 @@
+# Test artifacts
+hosts/framework/local.nix.backup
+
+# Nix build results
+result
+result-*
+
+# Hardware configuration (machine-specific)
+# Uncomment if you don't want to track hardware-configuration.nix
+# hosts/*/hardware-configuration.nix

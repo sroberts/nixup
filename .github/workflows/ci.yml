@@ -1,0 +1,39 @@
+# CI/CD Pipeline for NixOS Configuration
+#
+# This workflow runs lightweight validation checks on GitHub Actions.
+# For comprehensive testing including full system builds, use local Docker tests:
+#   make test-docker
+#
+# The flake check validates:
+# - Nix syntax and evaluation
+# - Module structure and imports
+# - Configuration consistency
+# - Home Manager integration
+
+name: CI
+
+on:
+  push:
+    branches: [ main, back-to-niri ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  nix-flake-check:
+    name: Nix Flake Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v3
+
+      - name: Check flake
+        run: nix flake check --all-systems --show-trace
+
+      - name: Show flake metadata
+        run: nix flake metadata

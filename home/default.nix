@@ -1,10 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, inputs, local, ... }:
 
 {
   imports = [
-    ./hyprland.nix
+    ./niri.nix
     ./waybar.nix
-    ./wofi.nix
     ./mako.nix
     ./zsh.nix
     ./ghostty.nix
@@ -15,8 +14,8 @@
     ./theme.nix
   ];
 
-  home.username = "scott";
-  home.homeDirectory = "/home/scott";
+  home.username = local.username;
+  home.homeDirectory = "/home/${local.username}";
 
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;
@@ -57,33 +56,7 @@
     };
   };
 
-  # Cursor theme
-  home.pointerCursor = {
-    name = "Nordzy-cursors";
-    package = pkgs.nordzy-cursor-theme;
-    size = 24;
-    gtk.enable = true;
-  };
-
-  # GTK theming
-  gtk = {
-    enable = true;
-    theme = {
-      name = "Nordic";
-      package = pkgs.nordic;
-    };
-    iconTheme = {
-      name = "Nordzy";
-      package = pkgs.nordzy-icon-theme;
-    };
-  };
-
-  # Qt theming
-  qt = {
-    enable = true;
-    platformTheme.name = "gtk";
-    style.name = "gtk2";
-  };
+  # Cursor theme, GTK theming, and Qt theming are configured in theme.nix
 
   # This value determines the Home Manager release
   home.stateVersion = "24.05";
