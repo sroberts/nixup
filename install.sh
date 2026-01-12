@@ -233,6 +233,9 @@ cd /mnt/etc/nixos
 
 nix-shell -p git --run "git clone https://github.com/sroberts/nixup.git ."
 
+# Fix default.nix to import hardware-configuration.nix (needed until PR is merged)
+sed -i 's|./hardware.nix|./hardware-configuration.nix|g' hosts/framework/default.nix
+
 # Step 13: Create local.nix
 info "Creating local configuration..."
 
