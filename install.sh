@@ -217,15 +217,19 @@ mkdir -p /mnt/boot
 mount "$BOOT_PART" /mnt/boot
 swapon "$SWAP_PART"
 
-# Step 11: Hardware config will be generated after repo clone
-info "Preparing for installation..."
+# Step 11: Generate hardware configuration with real UUIDs
+info "Generating hardware configuration..."
+
+nixos-generate-config --root /mnt
+# Save the generated hardware config to /tmp before cloning repo
+mv /mnt/etc/nixos/hardware-configuration.nix /tmp/hardware-configuration.nix
+rm -rf /mnt/etc/nixos
 
 # Step 12: Clone Repository
 info "Cloning nixup repository..."
 
 mkdir -p /mnt/etc/nixos
 cd /mnt/etc/nixos
-rm -f configuration.nix hardware-configuration.nix
 
 nix-shell -p git --run "git clone https://github.com/sroberts/nixup.git ."
 
@@ -246,11 +250,10 @@ cat > hosts/framework/local.nix << EOF
 }
 EOF
 
-# Step 14: Generate hardware-configuration.nix with filesystem info
-info "Generating hardware configuration..."
+# Step 14: Move generated hardware config to final location
+info "Installing hardware configuration..."
 
-nixos-generate-config --root /mnt
-mv /mnt/etc/nixos/hardware-configuration.nix hosts/framework/
+mv /tmp/hardware-configuration.nix hosts/framework/
 
 # Step 15: Install NixOS
 info "Installing NixOS..."
