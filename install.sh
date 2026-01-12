@@ -212,6 +212,7 @@ info "Preparing for installation..."
 # Step 12: Clone Repository
 info "Cloning nixup repository..."
 
+mkdir -p /mnt/etc/nixos
 cd /mnt/etc/nixos
 rm -f configuration.nix hardware-configuration.nix
 
