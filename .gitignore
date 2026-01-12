@@ -6,5 +6,7 @@ result
 result-*
 
 # Hardware configuration (machine-specific)
-# Uncomment if you don't want to track hardware-configuration.nix
+# hardware-configuration.nix is a template in the repo for CI/CD testing
+# During installation, it gets overwritten with actual hardware values
+# Uncomment the line below if you don't want to track changes after installation:
 # hosts/*/hardware-configuration.nix

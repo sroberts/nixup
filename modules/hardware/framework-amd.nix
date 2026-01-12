@@ -14,7 +14,7 @@
   # AMD P-State driver for better power efficiency
   boot.kernelParams = [
     "amd_pstate=active"
-    "amdgpu.sg_display=0"  # Fix for display issues on some Framework configs
+    # Removed amdgpu.sg_display=0 - causes GPU init failures on Framework 13 with integrated graphics
   ];
 
   # Firmware updates

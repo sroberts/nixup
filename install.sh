@@ -206,10 +206,8 @@ mkdir -p /mnt/boot
 mount "$BOOT_PART" /mnt/boot
 swapon "$SWAP_PART"
 
-# Step 11: Generate Hardware Configuration
-info "Generating hardware configuration..."
-
-nixos-generate-config --root /mnt
+# Step 11: Hardware config will be generated after repo clone
+info "Preparing for installation..."
 
 # Step 12: Clone Repository
 info "Cloning nixup repository..."
@@ -236,10 +234,10 @@ cat > hosts/framework/local.nix << EOF
 }
 EOF
 
-# Step 14: Regenerate hardware-configuration.nix in correct location
-info "Updating hardware configuration..."
+# Step 14: Generate hardware-configuration.nix with filesystem info
+info "Generating hardware configuration..."
 
-nixos-generate-config --root /mnt --no-filesystems
+nixos-generate-config --root /mnt
 mv /mnt/etc/nixos/hardware-configuration.nix hosts/framework/
 
 # Step 15: Install NixOS

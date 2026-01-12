@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./hardware.nix
+    ./hardware-configuration.nix
     ../../modules/hardware/framework-amd.nix
     ../../modules/hardware/fingerprint.nix
     ../../modules/hardware/power.nix

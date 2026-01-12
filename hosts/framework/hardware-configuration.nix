@@ -1,16 +1,8 @@
-# ⚠️  WARNING: This is a TEMPLATE file for documentation purposes only!
-# ⚠️  The actual hardware configuration is in hardware-configuration.nix
-# ⚠️  This file should NOT be imported by default.nix
-# ⚠️
-# ⚠️  This file shows the expected structure but contains placeholder values.
-# ⚠️  The automated installer (install.sh) generates hardware-configuration.nix
-# ⚠️  with your actual hardware UUIDs and settings.
-#
-# For manual installation, replace hardware-configuration.nix with output from:
+# This file is a placeholder. Replace with output from:
 #   nixos-generate-config --show-hardware-config
 #
 # Run this on your Framework laptop during installation.
-# The generated config will include disk/partition UUIDs,
+# The generated config will include disk/partition UUIDs, 
 # kernel modules, and other hardware-specific settings.
 
 { config, lib, pkgs, modulesPath, ... }:
