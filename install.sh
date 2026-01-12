@@ -155,8 +155,19 @@ fi
 # Step 7: Partitioning
 info "Creating partitions..."
 
+# Cleanup any existing installations
+info "Cleaning up any existing installations..."
+
 # Unmount any existing mounts
 umount -R /mnt 2>/dev/null || true
+
+# Turn off swap if active
+swapoff -a 2>/dev/null || true
+
+# Close any open LUKS mappings
+if [ -e /dev/mapper/cryptroot ]; then
+    cryptsetup close cryptroot 2>/dev/null || true
+fi
 
 # Wipe disk
 wipefs -af "$DISK"
